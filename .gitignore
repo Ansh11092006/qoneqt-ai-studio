@@ -1,32 +1,78 @@
+# =========================
 # Python
+# =========================
 .venv/
+venv/
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 
-# Secrets
+# =========================
+# Secrets & Environment
+# =========================
 .env
+.env.*
+!.env.example
 
-# Node
+# Sensitive local data
+data/.secret.key
+data/user_providers.json
+
+# =========================
+# Node / npm
+# =========================
 node_modules/
 frontend/node_modules/
-
-# Build output
-dist/
-build/
-frontend/dist/
-
-# Logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# IDE / OS
+# =========================
+# Build Output
+# =========================
+dist/
+build/
+frontend/dist/
+frontend/build/
+.vite/
+
+# =========================
+# Runtime / Generated Data
+# =========================
+data/uploads/
+data/media_cache/
+data/jobs/
+data/test_run/
+
+# Generated media
+test_out.mp4
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# IDE / Editor
+# =========================
 .vscode/
+!.vscode/extensions.json
 .idea/
+
+# =========================
+# Operating System
+# =========================
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Generated output
-test_out.mp4
+# =========================
+# Temporary Files
+# =========================
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo

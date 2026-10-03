@@ -37,6 +37,7 @@ export const ImmersiveFullscreenNav: React.FC<NavProps> = ({
     { label: "Dashboard", href: "/" },
     { label: "Create Video", href: "/create" },
     { label: "AI Command Center", href: "/command-center", badge: "Neural HQ" },
+    { label: "API Configuration", href: "/api-configuration", badge: "Models" },
     { label: "Analytics 3D", href: "/analytics", badge: "New" },
     { label: "Batch Studio", href: "/batch" },
     { label: "Library", href: "/library" },

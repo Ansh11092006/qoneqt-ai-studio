@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FileText, Film, Image as ImageIcon, Mic, Sparkles, CheckCircle2 } from "lucide-react";
+import { FileText, Film, Image as ImageIcon, Mic, Sparkles } from "lucide-react";
 import { FileUpload, UploadedFile } from "@/components/ui/advanced-file-upload";
 
 interface UploadCardProps {
@@ -17,22 +17,37 @@ export const UploadCard: React.FC<UploadCardProps> = ({
   const [audioFiles, setAudioFiles] = useState<UploadedFile[]>([]);
   const [logoFiles, setLogoFiles] = useState<UploadedFile[]>([]);
 
+  const collectAllIds = (
+    media: UploadedFile[],
+    docs: UploadedFile[],
+    audio: UploadedFile[],
+    logo: UploadedFile[]
+  ) => {
+    const ids: string[] = [];
+    for (const f of [...media, ...docs, ...audio, ...logo]) {
+      if (f.assetId) ids.push(f.assetId);
+    }
+    onAssetsChanged(ids);
+  };
+
   const handleMediaChange = (files: UploadedFile[]) => {
     setMediaFiles(files);
-    const validIds = files.filter((f) => f.assetId).map((f) => f.assetId as string);
-    if (logoFiles.length && logoFiles[0].assetId) {
-      validIds.push(logoFiles[0].assetId);
-    }
-    onAssetsChanged(validIds);
+    collectAllIds(files, docFiles, audioFiles, logoFiles);
+  };
+
+  const handleDocChange = (files: UploadedFile[]) => {
+    setDocFiles(files);
+    collectAllIds(mediaFiles, files, audioFiles, logoFiles);
+  };
+
+  const handleAudioChange = (files: UploadedFile[]) => {
+    setAudioFiles(files);
+    collectAllIds(mediaFiles, docFiles, files, logoFiles);
   };
 
   const handleLogoChange = (files: UploadedFile[]) => {
     setLogoFiles(files);
-    const validIds = mediaFiles.filter((f) => f.assetId).map((f) => f.assetId as string);
-    if (files.length && files[0].assetId) {
-      validIds.push(files[0].assetId);
-    }
-    onAssetsChanged(validIds);
+    collectAllIds(mediaFiles, docFiles, audioFiles, files);
   };
 
   return (
@@ -88,7 +103,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({
           {activeTab === "media" && "AI Scene & Visual Style Reference"}
           {activeTab === "docs" && "Auto Script & Context Extraction"}
           {activeTab === "audio" && "Neural Voice & Narration Clone"}
-          {activeTab === "logo" && "Watermark & Brand Overlay"}
+          {activeTab === "logo" && "Brand Logo Asset"}
         </div>
       </div>
 
@@ -111,7 +126,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({
             maxSizeMB={15}
             maxFiles={3}
             files={docFiles}
-            onFilesChange={setDocFiles}
+            onFilesChange={handleDocChange}
             onScriptLoaded={onScriptLoaded}
           />
         )}
@@ -122,7 +137,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({
             maxSizeMB={25}
             maxFiles={2}
             files={audioFiles}
-            onFilesChange={setAudioFiles}
+            onFilesChange={handleAudioChange}
           />
         )}
         {activeTab === "logo" && (

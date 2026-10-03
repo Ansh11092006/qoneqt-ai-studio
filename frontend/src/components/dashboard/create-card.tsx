@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Sparkles, Film, ArrowRight, Loader2, Video, Camera,
   Shield, Check, Droplets, Sliders, RefreshCw, Wand2, Eye,
-  Layers, Clock, Monitor
+  Layers, Clock, Monitor, Key, Settings
 } from "lucide-react";
 import {
   generateRealVideo, GenerateVideoPayload, fetchProviderStatus,
-  ProviderStatus, WatermarkPayload
+  ProviderStatus, WatermarkPayload, fetchUserProviders,
+  UserProviderSettingsResponse
 } from "@/api/client";
 
 interface CreateCardProps {
@@ -37,6 +38,7 @@ const CAMERA_MOTIONS = [
 
 export const CreateCard: React.FC<CreateCardProps> = ({
   externalPrompt,
+  assetIds = [],
 }) => {
   const navigate = useNavigate();
 
@@ -47,13 +49,12 @@ export const CreateCard: React.FC<CreateCardProps> = ({
   const [duration, setDuration] = useState<5 | 10>(5);
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16" | "1:1">("16:9");
 
-  // Watermark Settings State
-  const [showWatermarkSettings, setShowWatermarkSettings] = useState(false);
-  const [watermark, setWatermark] = useState<WatermarkPayload>({
-    enabled: true,
-    text: "Qoneqt.ai",
+  // Watermark Settings State (disabled)
+  const [watermark] = useState<WatermarkPayload>({
+    enabled: false,
+    text: "",
     position: "bottom-right",
-    opacity: 0.6,
+    opacity: 0,
     size: "medium",
   });
 
@@ -61,9 +62,11 @@ export const CreateCard: React.FC<CreateCardProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [providerStatus, setProviderStatus] = useState<ProviderStatus | null>(null);
+  const [userSettings, setUserSettings] = useState<UserProviderSettingsResponse | null>(null);
 
   useEffect(() => {
     fetchProviderStatus().then(setProviderStatus).catch(() => {});
+    fetchUserProviders().then(setUserSettings).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -87,6 +90,13 @@ export const CreateCard: React.FC<CreateCardProps> = ({
         duration,
         aspect_ratio: aspectRatio,
         watermark,
+        asset_ids: assetIds.length > 0 ? assetIds : undefined,
+        generation_config: {
+          provider: userSettings?.active_mode || "qoneqt",
+          provider_id: userSettings?.active_provider_id || undefined,
+          model: userSettings?.active_model || undefined,
+          allow_fallback: userSettings?.allow_fallback || false,
+        }
       };
 
       const result = await generateRealVideo(payload);
@@ -113,21 +123,28 @@ export const CreateCard: React.FC<CreateCardProps> = ({
 
           {/* Provider status badges */}
           <div className="flex items-center gap-2 text-[10px] font-mono">
-            <span className={`px-2 py-0.5 rounded-full border ${
-              providerStatus?.gemini.connected
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                : "bg-white/5 text-white/40 border-white/10"
-            }`}>
-              {providerStatus?.gemini.connected ? "✓ Gemini AI Connected" : "Gemini: Prompt Engine"}
-            </span>
-
-            <span className={`px-2 py-0.5 rounded-full border ${
-              providerStatus?.pexels.connected
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                : "bg-white/5 text-white/40 border-white/10"
-            }`}>
-              {providerStatus?.pexels.connected ? "✓ Pexels B-Roll Active" : "Cinematic Fallback Active"}
-            </span>
+            <Link
+              to="/api-configuration"
+              title="Click to manage AI Providers"
+              className={`px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition-all cursor-pointer ${
+                userSettings?.active_mode === "user"
+                  ? "bg-[#00f5ff]/15 text-[#00f5ff] border-[#00f5ff]/40 hover:bg-[#00f5ff]/25"
+                  : "bg-[#ff0055]/15 text-[#ff0055] border-[#ff0055]/40 hover:bg-[#ff0055]/25"
+              }`}
+            >
+              {userSettings?.active_mode === "user" ? (
+                <>
+                  <Key size={11} />
+                  <span>My API: {userSettings?.active_provider_id?.toUpperCase() || "Custom"}</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={11} />
+                  <span>⚡ Qoneqt Free Models (Included)</span>
+                </>
+              )}
+              <Settings size={10} className="opacity-60 ml-0.5" />
+            </Link>
           </div>
         </div>
 
@@ -279,97 +296,6 @@ export const CreateCard: React.FC<CreateCardProps> = ({
             ))}
           </div>
         </div>
-      </div>
-
-      {/* ── Watermark Settings (Burned in via FFmpeg) ── */}
-      <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/8 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield size={14} className="text-[#ff0055]" />
-            <span className="text-xs font-bold text-white">FFmpeg Watermark Engine</span>
-            <span className="text-[10px] text-white/40 font-mono">Burned into final video file</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowWatermarkSettings(!showWatermarkSettings)}
-            className="text-xs text-[#ff0055] hover:underline font-mono"
-          >
-            {showWatermarkSettings ? "Hide Settings" : "Configure Watermark"}
-          </button>
-        </div>
-
-        {showWatermarkSettings && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-white/5">
-            {/* Enabled */}
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono text-white/40 block">ENABLE WATERMARK</span>
-              <button
-                type="button"
-                onClick={() => setWatermark(w => ({ ...w, enabled: !w.enabled }))}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                  watermark.enabled ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40" : "bg-white/5 text-white/40 border-white/10"
-                }`}
-              >
-                {watermark.enabled ? "✓ Enabled" : "✕ Disabled"}
-              </button>
-            </div>
-
-            {/* Text */}
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono text-white/40 block">WATERMARK TEXT</span>
-              <input
-                type="text"
-                value={watermark.text}
-                onChange={(e) => setWatermark(w => ({ ...w, text: e.target.value }))}
-                className="w-full px-3 py-1.5 rounded-lg bg-black/50 border border-white/10 text-xs text-white focus:outline-none focus:border-[#ff0055]"
-              />
-            </div>
-
-            {/* Position */}
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono text-white/40 block">POSITION</span>
-              <select
-                value={watermark.position}
-                onChange={(e) => setWatermark(w => ({ ...w, position: e.target.value as any }))}
-                className="w-full px-3 py-1.5 rounded-lg bg-black/50 border border-white/10 text-xs text-white focus:outline-none"
-              >
-                <option value="bottom-right" className="bg-neutral-900">Bottom Right</option>
-                <option value="bottom-left" className="bg-neutral-900">Bottom Left</option>
-                <option value="top-right" className="bg-neutral-900">Top Right</option>
-                <option value="top-left" className="bg-neutral-900">Top Left</option>
-                <option value="center" className="bg-neutral-900">Center</option>
-              </select>
-            </div>
-
-            {/* Opacity & Size */}
-            <div className="space-y-1">
-              <span className="text-[10px] font-mono text-white/40 block">OPACITY & SIZE</span>
-              <div className="flex gap-2">
-                <select
-                  value={watermark.opacity}
-                  onChange={(e) => setWatermark(w => ({ ...w, opacity: parseFloat(e.target.value) }))}
-                  className="flex-1 px-2 py-1.5 rounded-lg bg-black/50 border border-white/10 text-xs text-white focus:outline-none"
-                >
-                  <option value={0.3} className="bg-neutral-900">30% Opacity</option>
-                  <option value={0.5} className="bg-neutral-900">50% Opacity</option>
-                  <option value={0.7} className="bg-neutral-900">70% Opacity</option>
-                  <option value={1.0} className="bg-neutral-900">100% Solid</option>
-                </select>
-
-                <select
-                  value={watermark.size}
-                  onChange={(e) => setWatermark(w => ({ ...w, size: e.target.value as any }))}
-                  className="flex-1 px-2 py-1.5 rounded-lg bg-black/50 border border-white/10 text-xs text-white focus:outline-none"
-                >
-                  <option value="small" className="bg-neutral-900">Small</option>
-                  <option value="medium" className="bg-neutral-900">Medium</option>
-                  <option value="large" className="bg-neutral-900">Large</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </form>
   );

@@ -38,10 +38,10 @@ export const Dashboard: React.FC = () => {
           <span className="text-[#ff0055] drop-shadow-[0_0_35px_rgba(255,0,85,0.6)]">that actually ships.</span>
         </h1>
         <p className="text-white/70 text-base sm:text-xl max-w-2xl mx-auto font-normal leading-relaxed">
-          Create a professional, short-form 9:16 video with AI. Describe your idea, preview your video, and refine it without editing.
+          Create professional, short-form 9:16 videos with AI. Describe your idea, preview your storyboard, and ship publish-ready videos with zero editing.
         </p>
         <p className="text-white/40 text-xs font-mono">
-          Create a free video to publish on Qoneqt Global Feed address. No credit card required.
+          Create high-impact, cinematic 9:16 videos ready for publishing.
         </p>
 
         {/* Hero Cream Input Card (Matching Image 4 bottom) */}
@@ -80,169 +80,8 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. FEATURE PILLS STRIP (Matching Image 1 top) */}
-      <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-8 sm:gap-14 text-xs font-semibold text-white/70 pt-6 border-t border-b border-white/10 py-6">
-        <div className="flex items-center gap-2">
-          <span className="text-[#ff0055]">✦</span> No credit card to start
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[#ff0055]">🌐</span> Free hosting & SSL
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[#ff0055]">🎬</span> Export your code
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[#ff0055]">🚀</span> Custom domain ready
-        </div>
-      </div>
-
-      {/* 3. FEATURE SHOWCASE SECTION (Matching Image 1, 2, 3) */}
-      <div className="max-w-7xl mx-auto space-y-10 pt-6">
-        <div className="text-left space-y-2">
-          <p className="text-xs font-mono font-bold tracking-widest text-[#ff0055] uppercase">
-            AI VIDEO BUILDER FEATURES
-          </p>
-          <h2 className="font-heading text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight max-w-3xl">
-            Not just a draft. The whole launch stack, generated with the site.
-          </h2>
-        </div>
-
-        {/* Feature Grid Row 1: Watch It Build Live (Left) + Vibrant Pink Hero Card (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Watch it build live Card */}
-          <div className="lg:col-span-7 rounded-[32px] bg-[#171516] border border-white/10 p-8 flex flex-col justify-between space-y-6">
-            <div className="space-y-3">
-              <span className="text-[#ff0055] text-xl">✦</span>
-              <h3 className="font-heading font-black text-2xl text-white">Watch it build, live</h3>
-              <p className="text-white/60 text-sm leading-relaxed max-w-lg">
-                Design, content and functionality stream in real time. No waiting on builds or deploys, you see it happen.
-              </p>
-              <div className="p-3.5 rounded-2xl bg-black/60 border border-white/10 text-xs font-mono text-white/80 max-w-md flex items-center gap-2">
-                <span className="text-[#ff0055]">✦</span> Create a video for my studio, with my projects and tips.
-              </div>
-            </div>
-
-            {/* Live Interactive Mockup Frame */}
-            <div className="rounded-2xl overflow-hidden border border-white/15 bg-[#0d0c0c] p-4 space-y-3 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2 text-[10px] font-mono text-white/40">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-                </div>
-                <span>qoneqt.ai / video-preview</span>
-              </div>
-              <div className="p-4 rounded-xl bg-gradient-to-r from-neutral-900 to-black flex items-center justify-between text-xs">
-                <div>
-                  <p className="font-bold text-white text-sm">Room for your ideas.</p>
-                  <p className="text-white/40 text-[10px]">9:16 Video Asset Stream</p>
-                </div>
-                <div className="w-20 h-24 rounded-lg bg-[#ff0055]/20 border border-[#ff0055]/40 flex items-center justify-center text-[#ff0055] text-xs font-bold">
-                  9:16 MP4
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Build in Minutes Vibrant Pink Hero Card */}
-          <div className="lg:col-span-5 rounded-[32px] bg-gradient-to-br from-[#ff0055] to-[#ff2b75] p-10 flex flex-col justify-between text-white shadow-[0_20px_50px_rgba(255,0,85,0.4)]">
-            <div className="space-y-4">
-              <h3 className="font-heading font-black text-4xl sm:text-5xl leading-tight">
-                Build in Minutes
-              </h3>
-              <p className="text-white/90 text-sm sm:text-base leading-relaxed">
-                Generate your video using natural language prompts, our AI video builder handles everything.
-              </p>
-            </div>
-            <div className="pt-8">
-              <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-2xl font-bold">
-                ⚡
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Feature Grid Row 2: 3 Columns (Image 3) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: SEO Essentials */}
-          <div className="rounded-[32px] bg-[#171516] border border-white/10 p-8 space-y-6 flex flex-col justify-between">
-            <div className="space-y-3">
-              <span className="text-[#ff0055] text-xl">🔍</span>
-              <h4 className="font-heading font-bold text-xl text-white">SEO essentials built in</h4>
-              <p className="text-white/60 text-xs leading-relaxed">
-                Meta tags, sitemaps & structured data, built in.
-              </p>
-            </div>
-            <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-[11px] font-mono text-white/70 space-y-1">
-              <p className="text-white font-bold">Forma — Interior Architecture</p>
-              <p className="text-white/40 text-[9px]">Explore our projects and imagine your next space.</p>
-            </div>
-          </div>
-
-          {/* Card 2: One-click Publish */}
-          <div className="rounded-[32px] bg-[#171516] border border-white/10 p-8 space-y-6 flex flex-col justify-between">
-            <div className="space-y-3">
-              <span className="text-[#ff0055] text-xl">🚀</span>
-              <h4 className="font-heading font-bold text-xl text-white">One-click publish</h4>
-              <p className="text-white/60 text-xs leading-relaxed">
-                Publish free on a Qoneqt address with SSL. Connect a custom domain with a paid plan.
-              </p>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-black/60 border border-white/10 flex items-center justify-between text-xs">
-              <div>
-                <p className="font-bold text-white text-[11px]">Your website is live</p>
-                <p className="text-[#ff0055] text-[10px] font-mono">your-studio.qoneqt.io</p>
-              </div>
-              <span className="text-white/40 font-mono text-xs">↗</span>
-            </div>
-          </div>
-
-          {/* Card 3: Export Your Code */}
-          <div className="rounded-[32px] bg-[#171516] border border-white/10 p-8 space-y-6 flex flex-col justify-between">
-            <div className="space-y-3">
-              <span className="text-[#ff0055] text-xl">📁</span>
-              <h4 className="font-heading font-bold text-xl text-white">Export your video</h4>
-              <p className="text-white/60 text-xs leading-relaxed">
-                Own the source MP4. Never locked in.
-              </p>
-            </div>
-            <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 text-center space-y-1">
-              <div className="w-10 h-10 rounded-xl bg-[#ff0055]/20 border border-[#ff0055]/40 flex items-center justify-center text-[#ff0055] text-lg">
-                ⬇
-              </div>
-              <p className="text-white font-bold text-xs">Your video, to go</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Feature Grid Row 3: Responsive By Default (Image 2) */}
-        <div className="rounded-[32px] bg-[#171516] border border-white/10 p-8 flex flex-col lg:flex-row items-center justify-between gap-8">
-          <div className="space-y-3 max-w-md">
-            <h3 className="font-heading font-black text-2xl text-white">Responsive by default</h3>
-            <p className="text-white/60 text-sm leading-relaxed">
-              Preview your video on desktop, tablet and mobile, then refine it with AI.
-            </p>
-          </div>
-
-          {/* Responsive Side-by-Side Preview Frame */}
-          <div className="flex items-center gap-4">
-            <div className="w-64 p-3 rounded-2xl bg-white text-black shadow-xl space-y-2">
-              <p className="font-heading font-bold text-xs border-b pb-1">Desktop Preview</p>
-              <p className="font-heading font-black text-base leading-tight">Room for your ideas.</p>
-              <div className="h-20 bg-neutral-200 rounded-lg" />
-            </div>
-
-            <div className="w-32 p-2.5 rounded-2xl bg-white text-black shadow-xl space-y-1.5 shrink-0">
-              <p className="font-heading font-bold text-[10px] border-b pb-1">Mobile</p>
-              <p className="font-heading font-black text-xs leading-tight">Room for your ideas.</p>
-              <div className="h-14 bg-neutral-200 rounded-lg" />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Studio Create Section Anchor */}
-      <div id="create-section" className="pt-12">
+      <div id="create-section" className="pt-4">
         <h3 className="font-heading font-black text-2xl text-white text-center mb-6">
           AI Studio <span className="text-[#ff0055]">Interactive Dashboard</span>
         </h3>
@@ -283,7 +122,7 @@ export const Dashboard: React.FC = () => {
         {/* ROW 2 — Upload Assets (span 2) + Pipeline Monitor (span 2) */}
         <BentoCard
           title="Upload Assets"
-          description="Your clips override Pexels stock in every scene"
+          description="Your clips override automatic B-Roll in every scene"
           icon={<UploadCloud size={16} />}
           colSpan={2}
         >

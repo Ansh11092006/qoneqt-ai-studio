@@ -15,9 +15,15 @@ def get_gemini_key() -> str:
     reload_env()
     return os.getenv("GEMINI_API_KEY", "").strip()
 
-def get_pexels_key() -> str:
+def get_media_provider_key() -> str:
     reload_env()
-    return os.getenv("PEXELS_API_KEY", "").strip()
+    return (
+        os.getenv("MEDIA_PROVIDER_API_KEY", "") or
+        os.getenv("PIXABAY_API_KEY", "")
+    ).strip()
+
+def get_pixabay_key() -> str:
+    return get_media_provider_key()
 
 def get_video_provider() -> str:
     reload_env()
@@ -46,7 +52,7 @@ def get_video_model() -> str:
 def get_watermark_defaults() -> dict:
     reload_env()
     return {
-        "enabled": os.getenv("WATERMARK_ENABLED", "true").strip().lower() in ("true", "1", "yes"),
+        "enabled": os.getenv("WATERMARK_ENABLED", "false").strip().lower() in ("true", "1", "yes"),
         "text": os.getenv("WATERMARK_TEXT", "Qoneqt.ai").strip(),
         "position": os.getenv("WATERMARK_POSITION", "bottom-right").strip().lower(),
         "opacity": float(os.getenv("WATERMARK_OPACITY", "0.6")),
@@ -54,8 +60,9 @@ def get_watermark_defaults() -> dict:
     }
 
 GEMINI_API_KEY = get_gemini_key()
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
-PEXELS_API_KEY = get_pexels_key()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
+MEDIA_PROVIDER_API_KEY = get_media_provider_key()
+PIXABAY_API_KEY = MEDIA_PROVIDER_API_KEY
 DEMO_MODE = os.getenv("DEMO_MODE", "false").strip().lower() in ("true", "1", "yes")
 
 PORT = int(os.getenv("PORT", "8000"))
@@ -66,11 +73,13 @@ DATA_DIR = ROOT_DIR / "data"
 JOBS_DIR = DATA_DIR / "jobs"
 UPLOADS_DIR = DATA_DIR / "uploads"
 DEMO_ASSETS_DIR = ROOT_DIR / "demo_assets"
+MEDIA_CACHE_DIR = DATA_DIR / "media_cache"
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 DEMO_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+MEDIA_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Locate FFmpeg and FFprobe binaries
 def find_binary(name: str) -> str:

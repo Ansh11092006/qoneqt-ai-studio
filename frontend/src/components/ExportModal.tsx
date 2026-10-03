@@ -12,7 +12,6 @@ interface ExportModalProps {
 export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, job }) => {
   const [format, setFormat] = useState<"mp4" | "mov" | "webm" | "gif">("mp4");
   const [resolution, setResolution] = useState<"720p" | "1080p" | "4k">("1080p");
-  const [watermark, setWatermark] = useState(false);
   const [burnSubtitles, setBurnSubtitles] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [copiedSrt, setCopiedSrt] = useState(false);
@@ -135,19 +134,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, job }
                 type="checkbox"
                 checked={burnSubtitles}
                 onChange={(e) => setBurnSubtitles(e.target.checked)}
-                className="w-4 h-4 accent-[#ff0055]"
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/8">
-              <div>
-                <p className="text-xs font-semibold text-white">Watermark</p>
-                <p className="text-[10px] text-white/40">Qoneqt AI Studio brand logo overlay</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={watermark}
-                onChange={(e) => setWatermark(e.target.checked)}
                 className="w-4 h-4 accent-[#ff0055]"
               />
             </div>

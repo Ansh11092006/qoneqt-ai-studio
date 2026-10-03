@@ -6,7 +6,7 @@ const PIPELINE_STEPS = [
   { id: "understanding", name: "1. Topic Understanding", desc: "Context & theme detection" },
   { id: "script", name: "2. Script & Hook", desc: "Gemini structured JSON director" },
   { id: "scenes", name: "3. Scene Planning", desc: "Duration pacing & visual queries" },
-  { id: "visuals", name: "4. Visual Sourcing", desc: "Uploads > Pexels > Dynamic cards" },
+  { id: "visuals", name: "4. Visual Sourcing", desc: "Uploads > Cinematic B-Roll > Dynamic cards" },
   { id: "voice", name: "5. Voice Synthesis", desc: "edge-tts + word timings" },
   { id: "compose", name: "6. Video Composer", desc: "FFmpeg 1080x1920 + ASS subtitles" },
   { id: "qc", name: "7. Quality Control", desc: "Automated 7-point audit & score" },

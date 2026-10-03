@@ -84,7 +84,7 @@ const UNIVERSES: Universe[] = [
     icon: <Rocket size={28} />,
   },
   {
-    id: "creatorverse", name: "CREATORVERSE", emoji: "🎨",
+    id: "creatoverse", name: "CREATOVERSE", emoji: "🎨",
     description: "Art, Music, Content & Creative Design",
     color: "#8b5cf6", bgColor: "#0f0a2a",
     keywords: ["Art", "Music", "Design", "Content"],
@@ -283,7 +283,7 @@ export const FeedPage: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1, duration: 0.5 }}
                     whileHover={{ scale: 1.02, y: -4 }}
-                    onClick={() => setActiveUniverse(uni.id)}
+                    onClick={() => navigate(`/universe/${uni.id}`)}
                     className="relative group cursor-pointer rounded-2xl overflow-hidden border backdrop-blur-xl anim-portal-glow"
                     style={{
                       minHeight: "300px",
@@ -331,7 +331,12 @@ export const FeedPage: React.FC = () => {
                       </div>
 
                       {/* Enter Button */}
-                      <button className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-black transition-all hover:brightness-110 shadow-lg group-hover:shadow-xl"
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/universe/${uni.id}`);
+                        }}
+                        className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-black transition-all hover:brightness-110 shadow-lg group-hover:shadow-xl"
                         style={{ backgroundColor: uni.color, boxShadow: `0 0 20px ${uni.color}40` }}>
                         Enter Universe <ChevronRight size={14} />
                       </button>

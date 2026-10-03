@@ -1,6 +1,10 @@
 import os
 import json
+import logging
 import asyncio
+import httpx
+
+logger = logging.getLogger("api")
 from pathlib import Path
 from typing import List, Dict, Optional
 from datetime import datetime, timezone
@@ -17,13 +21,14 @@ from backend.models import (
     ViralSimulation, StoryUniverse, StorySeriesItem, MultiPlatformAdaptation
 )
 from backend.services.theme import get_theme_for_prompt
-from backend.services.uploads import handle_uploaded_file
+from backend.services.uploads import handle_uploaded_file, run_asset_analysis, get_asset_status
 from backend.services.jobs import (
     create_job, get_job, list_recent_jobs, 
     add_job_listener, remove_job_listener, save_job, get_job_dir
 )
 from backend.services.pipeline import execute_job_pipeline
 from backend.services.composer import apply_watermark_to_master
+from backend.services.media_utils import stream_file_with_range, atomic_cache_download
 
 app = FastAPI(
     title="Qoneqt AI Studio API",
@@ -54,21 +59,126 @@ class BatchJobRequest(BaseModel):
 @app.get("/api/providers/status")
 async def get_providers_status():
     """Returns live connection status of real AI and media services."""
-    from backend.config import get_gemini_key, get_pexels_key, GEMINI_MODEL, DEMO_MODE
+    from backend.config import get_gemini_key, get_media_provider_key, GEMINI_MODEL, DEMO_MODE
     gemini_key = get_gemini_key()
-    pexels_key = get_pexels_key()
+    media_key = get_media_provider_key()
     return {
         "gemini": {
             "connected": bool(gemini_key),
-            "model": GEMINI_MODEL or "gemini-2.5-flash",
+            "model": GEMINI_MODEL or "gemini-3.8-flash",
             "status": "Connected" if gemini_key else "Provider not connected"
         },
-        "pexels": {
-            "connected": bool(pexels_key),
-            "status": "Connected" if pexels_key else "Provider not connected"
+        "media_engine": {
+            "connected": bool(media_key),
+            "status": "Connected" if media_key else "Provider not connected"
+        },
+        "broll_engine": {
+            "connected": bool(media_key),
+            "status": "Connected" if media_key else "Provider not connected"
         },
         "demo_mode": DEMO_MODE
     }
+
+# -------------------------------------------------------------
+# 0.1 CENTRAL MODEL REGISTRY & USER PROVIDER CONFIGURATION
+# -------------------------------------------------------------
+from backend.services.ai_service import QONEQT_FREE_MODELS, test_provider_connection
+from backend.services.provider_storage import (
+    SUPPORTED_PROVIDERS, get_safe_user_settings, save_provider_config,
+    delete_provider_config, update_active_settings, get_decrypted_key
+)
+
+class SaveProviderRequest(BaseModel):
+    provider_id: str
+    api_key: Optional[str] = None
+    model: Optional[str] = None
+    base_url: Optional[str] = None
+    available_models: Optional[List[str]] = None
+
+class TestProviderRequest(BaseModel):
+    provider_id: str
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+
+class ActiveProviderRequest(BaseModel):
+    active_mode: Optional[str] = None
+    active_provider_id: Optional[str] = None
+    active_model: Optional[str] = None
+    allow_fallback: Optional[bool] = None
+
+@app.get("/api/models")
+async def get_model_registry():
+    """Returns the central Qoneqt Free model registry and supported BYOK providers."""
+    return {
+        "free_models": QONEQT_FREE_MODELS,
+        "providers_catalog": SUPPORTED_PROVIDERS,
+        "default_mode": "qoneqt"
+    }
+
+@app.get("/api/user-providers")
+async def get_user_providers_endpoint():
+    """Returns user's configured providers with masked keys (secrets never exposed)."""
+    return get_safe_user_settings("default_user")
+
+@app.post("/api/user-providers/test")
+async def test_user_provider_endpoint(req: TestProviderRequest):
+    """Tests connection to the specified provider without exposing or logging secrets."""
+    candidate_key = req.api_key
+    if not candidate_key:
+        # Check if user already has a saved encrypted key
+        candidate_key = get_decrypted_key("default_user", req.provider_id)
+    if not candidate_key and req.provider_id != "custom":
+        return {"success": False, "error": "No API key provided to test"}
+
+    result = await test_provider_connection(
+        provider_id=req.provider_id,
+        api_key=candidate_key or "",
+        base_url=req.base_url or ""
+    )
+    return result
+
+@app.post("/api/user-providers")
+async def save_user_provider_endpoint(req: SaveProviderRequest):
+    """Securely encrypts and saves user API key and model preference."""
+    status = "configured"
+    # Auto-verify key if provided
+    if req.api_key and req.api_key.strip():
+        test_res = await test_provider_connection(
+            provider_id=req.provider_id,
+            api_key=req.api_key.strip(),
+            base_url=req.base_url or ""
+        )
+        if test_res.get("success"):
+            status = "verified"
+            if test_res.get("models") and not req.available_models:
+                req.available_models = test_res.get("models")
+
+    safe_settings = save_provider_config(
+        user_id="default_user",
+        provider_id=req.provider_id,
+        api_key=req.api_key,
+        model=req.model,
+        base_url=req.base_url,
+        available_models=req.available_models,
+        status=status
+    )
+    return safe_settings
+
+@app.delete("/api/user-providers/{provider_id}")
+async def delete_user_provider_endpoint(provider_id: str):
+    """Deletes a saved provider configuration."""
+    return delete_provider_config("default_user", provider_id)
+
+@app.post("/api/user-providers/active")
+async def set_active_provider_endpoint(req: ActiveProviderRequest):
+    """Sets active mode (Qoneqt Free vs My API) and active provider/model."""
+    return update_active_settings(
+        user_id="default_user",
+        active_mode=req.active_mode,
+        active_provider_id=req.active_provider_id,
+        active_model=req.active_model,
+        allow_fallback=req.allow_fallback
+    )
 
 # -------------------------------------------------------------
 # 1. THEME ENDPOINT (Instant Local Match + Optional Upgrade)
@@ -83,10 +193,35 @@ async def detect_theme(payload: ThemeRequest):
 # 2. UPLOADS ENDPOINT (Scripts, Media Clips, Logo)
 # -------------------------------------------------------------
 @app.post("/api/uploads")
-async def upload_asset(file: UploadFile = File(...)):
-    """Handles asset uploads for script files, b-roll footage, and brand watermark logo."""
+async def upload_asset(file: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks()):
+    """Saves uploaded asset immediately and returns. AI analysis runs in background."""
     result = await handle_uploaded_file(file)
+    # Fire-and-forget background analysis (does not block the response)
+    background_tasks.add_task(run_asset_analysis, result["asset_id"])
     return result
+
+@app.post("/api/assets/{asset_id}/analyze")
+async def trigger_asset_analysis(asset_id: str, background_tasks: BackgroundTasks):
+    """Triggers (or re-triggers) background AI analysis for an already-uploaded asset."""
+    status = get_asset_status(asset_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    if status.get("analysisStatus") not in ("complete", "analyzing"):
+        background_tasks.add_task(run_asset_analysis, asset_id)
+    return {"asset_id": asset_id, "queued": True, "analysisStatus": status.get("analysisStatus", "pending")}
+
+@app.get("/api/assets/{asset_id}/status")
+async def get_asset_analysis_status(asset_id: str):
+    """Polls analysis status for a single asset (for frontend polling)."""
+    status = get_asset_status(asset_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    return {
+        "asset_id": asset_id,
+        "analysisStatus": status.get("analysisStatus", "pending"),
+        "analysis": status.get("analysis", {}),
+        "analysisError": status.get("analysisError"),
+    }
 
 @app.get("/api/uploads/{filename}")
 async def get_uploaded_asset(filename: str):
@@ -108,7 +243,7 @@ from backend.services.video_generator import (
 async def generate_video_endpoint(request: GenerateVideoRequest, background_tasks: BackgroundTasks):
     """
     Search-engine-style real cinematic video generation route.
-    Enhances prompt -> calls AI video provider / cinematic engine -> burns in watermark via FFmpeg.
+    Enhances prompt -> calls AI video provider / cinematic engine -> renders clean final video.
     """
     job_id = f"vjob_{uuid.uuid4().hex[:10]}"
     job = VideoJobStatus(
@@ -127,7 +262,7 @@ async def generate_video_endpoint(request: GenerateVideoRequest, background_task
 
 @app.get("/api/video-status/{job_id}")
 async def get_video_status_endpoint(job_id: str):
-    """Returns granular stage progress (enhancing_prompt, generating_video, downloading_video, applying_watermark, completed)."""
+    """Returns granular stage progress (enhancing_prompt, generating_video, downloading_video, processing_video, completed)."""
     job = get_video_job(job_id)
     if not job:
         std_job = get_job(job_id)
@@ -185,7 +320,7 @@ async def get_job_status(job_id: str):
                         "Calibrating audio and lighting...",
                         "Composing neural effects...",
                         "Synthesizing high dynamic range master...",
-                        "Burning in Qoneqt branding watermark..."
+                        "Finalizing clean master encode..."
                     ]
                 ),
                 scenes=[
@@ -216,14 +351,14 @@ async def get_job_status(job_id: str):
                     QCCheckItem(name="Audio Sync", category_id="audio_sync", status="passed", passed=True, score=10, detail="AAC synchronized"),
                     QCCheckItem(name="Voice Clarity", category_id="voice_clarity", status="passed", passed=True, score=10, detail="Clean audio track"),
                     QCCheckItem(name="Scene Consistency", category_id="scene_consistency", status="passed", passed=True, score=10, detail=f"Style: {vjob.style}"),
-                    QCCheckItem(name="Branding & Watermark", category_id="branding_watermark", status="passed", passed=True, score=10, detail="Qoneqt.ai burned in via FFmpeg"),
+                    QCCheckItem(name="Production Standards", category_id="production_standards", status="passed", passed=True, score=10, detail="Clean delivery video rendered"),
                     QCCheckItem(name="Caption Accuracy", category_id="caption_accuracy", status="passed", passed=True, score=10, detail="High-contrast subtitle alignment"),
                     QCCheckItem(name="Community Relevance", category_id="community_relevance", status="passed", passed=True, score=10, detail="Trending topic alignment"),
                     QCCheckItem(name="Platform Optimization", category_id="platform_optimization", status="passed", passed=True, score=10, detail=f"Native {aspect} format"),
                 ],
-                suggestions=["Video is rendered with burned-in watermark.", "Ready for global sharing."],
+                suggestions=["Video is rendered cleanly to production standards.", "Ready for global sharing."],
                 global_ready=vjob.status == "completed",
-                watermark_applied=True
+                watermark_applied=False
             )
             return JobStatus(
                 job_id=vjob.job_id,
@@ -240,7 +375,7 @@ async def get_job_status(job_id: str):
                 video_url=vjob.watermarked_video_url or vjob.video_url,
                 master_video_url=vjob.video_url,
                 thumbnail_url=vjob.thumbnail_url,
-                watermark_applied=True,
+                watermark_applied=False,
                 qc_report=qc_report,
                 created_at=datetime.fromtimestamp(vjob.created_at, timezone.utc).isoformat()
             )
@@ -566,7 +701,7 @@ async def publish_video(job_id: str):
 # 7. VIDEO & THUMBNAIL STREAMING
 # -------------------------------------------------------------
 @app.api_route("/api/videos/{filename}", methods=["GET", "HEAD"])
-async def get_video(filename: str):
+async def get_video(filename: str, request: Request):
     clean_id = filename.replace(".mp4", "")
     job_dir = JOBS_DIR / clean_id
     video_path = job_dir / "final.mp4"
@@ -578,11 +713,22 @@ async def get_video(filename: str):
     if not video_path.exists():
         raise HTTPException(status_code=404, detail="Video file not found")
         
-    return FileResponse(
-        path=video_path,
-        media_type="video/mp4",
-        filename=f"{clean_id}.mp4"
-    )
+    return stream_file_with_range(video_path, request, media_type="video/mp4")
+
+@app.api_route("/api/jobs/{job_id}/video", methods=["GET", "HEAD"])
+async def get_job_video_stream(job_id: str, request: Request):
+    clean_id = job_id.replace(".mp4", "")
+    job_dir = JOBS_DIR / clean_id
+    video_path = job_dir / "final.mp4"
+    if not video_path.exists():
+        video_path = job_dir / "final_output.mp4"
+    if not video_path.exists():
+        video_path = job_dir / "raw_generated.mp4"
+        
+    if not video_path.exists():
+        raise HTTPException(status_code=404, detail="Video file not found")
+        
+    return stream_file_with_range(video_path, request, media_type="video/mp4")
 
 @app.get("/api/videos/{job_id}/download")
 async def download_video(job_id: str):
@@ -889,6 +1035,199 @@ async def get_multiplatform_intelligence():
             pacing_multiplier=1.0
         )
     ]
+
+# -------------------------------------------------------------
+# 8.5. UNIVERSE MULTIVERSE & CONTENT HUB ENDPOINTS
+# -------------------------------------------------------------
+from backend.services.universe import (
+    UNIVERSE_CONFIGS, get_universe_feed,
+    save_universe_video, load_universe_videos
+)
+
+class UniverseVideoPayload(BaseModel):
+    videoId: str
+    title: str
+    description: Optional[str] = ""
+    videoUrl: str
+    thumbnailUrl: Optional[str] = None
+    universe: str
+    topics: List[str] = []
+    source: str = "qoneqt-ai"
+    creatorId: str = "@you"
+    views: str = "1.2K"
+    likes: str = "340"
+    comments: str = "24"
+    createdAt: Optional[str] = None
+    isVertical: bool = True
+
+@app.get("/api/universes")
+async def list_universes():
+    """Returns metadata configs for all 6 universes."""
+    return list(UNIVERSE_CONFIGS.values())
+
+@app.get("/api/universe/{universe_id}/feed")
+async def get_universe_feed_endpoint(universe_id: str, topic: Optional[str] = None):
+    """Returns curated universe feed combining discovery videos and Qoneqt AI studio creations."""
+    feed = await get_universe_feed(universe_id, topic=topic)
+    return feed
+
+@app.post("/api/universe/videos")
+async def save_universe_video_endpoint(payload: UniverseVideoPayload):
+    """Assigns and saves a Qoneqt AI generated video to a universe feed."""
+    data = payload.model_dump()
+    if not data.get("createdAt"):
+        data["createdAt"] = datetime.now(timezone.utc).isoformat()
+    success = save_universe_video(data)
+    return {"success": success, "video": data}
+
+@app.get("/api/universe/{universe_id}/videos")
+async def get_universe_qoneqt_videos(universe_id: str):
+    """Returns all Qoneqt AI generated videos in this universe."""
+    norm_id = universe_id.lower()
+    videos = [v for v in load_universe_videos() if v.get("universe") == norm_id]
+    return videos
+
+from backend.services.media_provider import get_media_entry, MEDIA_CACHE_DIR
+
+@app.api_route("/api/media/stream/{media_id}", methods=["GET", "HEAD"])
+async def stream_media_endpoint(media_id: str, request: Request, background_tasks: BackgroundTasks):
+    """
+    Streams media internally with full HTTP Range seeking support and atomic caching.
+    Ensures complete duration (17s, 30s, 45s) and original audio playback.
+    """
+    entry = get_media_entry(media_id)
+    if not entry or not entry.get("remote_video_url"):
+        raise HTTPException(status_code=404, detail="Media not found")
+
+    cache_file = MEDIA_CACHE_DIR / f"{media_id}.mp4"
+    if cache_file.exists() and cache_file.stat().st_size > 1000:
+        return stream_file_with_range(cache_file, request, media_type="video/mp4")
+
+    remote_url = entry["remote_video_url"]
+
+    # Trigger background atomic download into local cache so future requests hit fast local disk
+    background_tasks.add_task(atomic_cache_download, remote_url, cache_file)
+
+    # For instant playback, forward client Range header to upstream server
+    range_hdr = request.headers.get("range")
+    req_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    }
+    if range_hdr:
+        req_headers["Range"] = range_hdr
+
+    client = httpx.AsyncClient(timeout=40.0, headers=req_headers)
+    try:
+        upstream_req = client.build_request(request.method, remote_url)
+        upstream_resp = await client.send(upstream_req, stream=True, follow_redirects=True)
+
+        resp_headers = {
+            "Accept-Ranges": "bytes",
+            "Content-Type": "video/mp4",
+        }
+        for hdr in ("Content-Range", "Content-Length"):
+            if hdr in upstream_resp.headers:
+                resp_headers[hdr] = upstream_resp.headers[hdr]
+
+        if request.method == "HEAD":
+            await upstream_resp.aclose()
+            await client.aclose()
+            return Response(status_code=upstream_resp.status_code, headers=resp_headers)
+
+        # If upstream responded 200 OK but client requested a byte range, synthesize 206 Partial Content
+        if upstream_resp.status_code == 200 and range_hdr and "=" in range_hdr:
+            total_size_str = upstream_resp.headers.get("content-length")
+            total_size = int(total_size_str) if total_size_str and total_size_str.isdigit() else None
+
+            unit, range_val = range_hdr.split("=", 1)
+            if unit.strip().lower() == "bytes" and total_size:
+                parts = range_val.split("-", 1)
+                start = int(parts[0].strip()) if parts[0].strip() else 0
+                end = int(parts[1].strip()) if len(parts) > 1 and parts[1].strip() else total_size - 1
+                end = min(end, total_size - 1)
+
+                if start <= end and start < total_size:
+                    range_headers = {
+                        "Accept-Ranges": "bytes",
+                        "Content-Type": "video/mp4",
+                        "Content-Range": f"bytes {start}-{end}/{total_size}",
+                        "Content-Length": str(end - start + 1),
+                    }
+
+                    async def range_stream_generator():
+                        current_pos = 0
+                        remaining_bytes = end - start + 1
+                        try:
+                            async for chunk in upstream_resp.aiter_bytes(chunk_size=64 * 1024):
+                                chunk_len = len(chunk)
+                                if current_pos + chunk_len <= start:
+                                    current_pos += chunk_len
+                                    continue
+
+                                chunk_start = max(0, start - current_pos)
+                                chunk_end = min(chunk_len, chunk_start + remaining_bytes)
+                                slice_data = chunk[chunk_start:chunk_end]
+                                current_pos += chunk_len
+                                remaining_bytes -= len(slice_data)
+                                yield slice_data
+                                if remaining_bytes <= 0:
+                                    break
+                        finally:
+                            await upstream_resp.aclose()
+                            await client.aclose()
+
+                    return StreamingResponse(
+                        range_stream_generator(),
+                        status_code=206,
+                        headers=range_headers,
+                        media_type="video/mp4"
+                    )
+
+        async def stream_generator():
+            try:
+                async for chunk in upstream_resp.aiter_bytes(chunk_size=64 * 1024):
+                    yield chunk
+            finally:
+                await upstream_resp.aclose()
+                await client.aclose()
+
+        return StreamingResponse(
+            stream_generator(),
+            status_code=upstream_resp.status_code,
+            headers=resp_headers,
+            media_type="video/mp4"
+        )
+    except Exception as e:
+        logger.error("[MEDIA] Stream proxy error for %s: %s", media_id, e)
+        await client.aclose()
+        raise HTTPException(status_code=502, detail="Failed to stream remote media")
+
+@app.get("/api/media/thumb/{media_id}")
+async def thumb_media_endpoint(media_id: str):
+    """
+    Streams thumbnail internally without exposing external provider URLs.
+    """
+    entry = get_media_entry(media_id)
+    if not entry or not entry.get("remote_thumb_url"):
+        raise HTTPException(status_code=404, detail="Thumbnail not found")
+
+    cache_thumb = MEDIA_CACHE_DIR / f"{media_id}.jpg"
+    if cache_thumb.exists() and cache_thumb.stat().st_size > 100:
+        return FileResponse(path=cache_thumb, media_type="image/jpeg")
+
+    remote_thumb = entry["remote_thumb_url"]
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+    try:
+        async with httpx.AsyncClient(timeout=15.0, headers=headers) as client:
+            resp = await client.get(remote_thumb, follow_redirects=True)
+            if resp.status_code == 200:
+                with open(cache_thumb, "wb") as f:
+                    f.write(resp.content)
+                return FileResponse(path=cache_thumb, media_type="image/jpeg")
+    except Exception as e:
+        logger.warning("Thumbnail proxy error for %s: %s", media_id, e)
+
+    raise HTTPException(status_code=404, detail="Thumbnail unavailable")
 
 # -------------------------------------------------------------
 # 9. HEALTH CHECK

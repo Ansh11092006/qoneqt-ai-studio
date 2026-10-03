@@ -7,15 +7,17 @@ from pathlib import Path
 from typing import List, Optional
 
 from backend.config import DATA_DIR, DEMO_MODE, UPLOADS_DIR, DEMO_ASSETS_DIR
-from backend.models import JobStatus, ContentPlan, Scene, Theme
+from backend.models import JobStatus, ContentPlan, Scene, Theme, SceneRecord
 from backend.services.jobs import get_job, save_job, emit_job_event, get_job_dir
 from backend.services.theme import get_theme_for_prompt
 from backend.services.director import generate_content_plan, get_demo_plan
+from backend.services.prompt_engine import understand_prompt, generate_semantic_storyboard
 from backend.services.tts import synthesize_scene_audio
 from backend.services.captions import generate_ass_subtitles
 from backend.services.media import prepare_all_visuals
 from backend.services.composer import normalize_scene_clip, compose_final_video
 from backend.services.qc import run_quality_check
+
 
 logger = logging.getLogger("pipeline")
 
@@ -158,51 +160,53 @@ async def execute_job_pipeline(job_id: str) -> None:
         save_job(job)
 
         # -------------------------------------------------------------
-        # STEP 1: Understanding (Topic Context & Theme Detection)
+        # STEP 1: Understanding (Extract Complete Idea Semantics)
         # -------------------------------------------------------------
-        detected_theme = get_theme_for_prompt(job.input)
-        msg = detected_theme.loading_messages[0]
         job.current_step = "understanding"
         job.step_status = "running"
-        job.message = msg
+        job.message = "Extracting complete idea semantics, subjects, and narrative arc..."
         job.elapsed_sec = elapsed()
         save_job(job)
         await emit_job_event(job_id, {
             "type": "step",
             "step": "understanding",
             "status": "running",
-            "message": msg,
+            "message": "Extracting main subjects, environment, lighting, and chronology...",
             "elapsed_sec": elapsed()
         })
-        await asyncio.sleep(0.5)
+
+        understanding = await understand_prompt(job.input, job.options)
+        job.understanding = understanding.model_dump()
+        detected_theme = get_theme_for_prompt(understanding.topic or job.input)
+        save_job(job)
 
         await emit_job_event(job_id, {
             "type": "step",
             "step": "understanding",
             "status": "done",
-            "message": "Content mood and thematic palette established",
+            "message": f"Semantic idea understood: {understanding.mainSubject} in {understanding.environment}",
             "elapsed_sec": elapsed()
         })
 
         # -------------------------------------------------------------
-        # STEP 2: Script (AI Content Director & Hook Creation)
+        # STEP 2: Script (AI Storyboard with Specific Visual Queries)
         # -------------------------------------------------------------
-        msg = detected_theme.loading_messages[1]
         job.current_step = "script"
         job.step_status = "running"
-        job.message = msg
+        job.message = "Directing chronological storyboard and targeted visual queries..."
         job.elapsed_sec = elapsed()
         save_job(job)
         await emit_job_event(job_id, {
             "type": "step",
             "step": "script",
             "status": "running",
-            "message": msg,
+            "message": "Directing scene progression and negative concept filters...",
             "elapsed_sec": elapsed()
         })
 
-        plan = await generate_content_plan(job.mode, job.input, job.options)
+        plan = await generate_semantic_storyboard(understanding, job.input, job.options)
         job.plan = plan
+        job.storyboard = [s.model_dump() for s in plan.scenes]
         save_job(job)
 
         # Emit partial hook event for typewriter reveal
@@ -215,7 +219,7 @@ async def execute_job_pipeline(job_id: str) -> None:
             "type": "step",
             "step": "script",
             "status": "done",
-            "message": "Viral hook and script synthesized",
+            "message": f"Created storyboard with {len(plan.scenes)} chronological beats",
             "elapsed_sec": elapsed()
         })
 
@@ -251,19 +255,19 @@ async def execute_job_pipeline(job_id: str) -> None:
         })
 
         # -------------------------------------------------------------
-        # STEP 4: Visuals (Parallel Sourcing: Uploads > Pexels > Cards)
+        # STEP 4: Visuals (Parallel Sourcing with Multi-Signal Matching)
         # -------------------------------------------------------------
         msg = plan.theme.loading_messages[3]
         job.current_step = "visuals"
         job.step_status = "running"
-        job.message = msg
+        job.message = "Acquiring visuals with multi-signal semantic relevance scoring..."
         job.elapsed_sec = elapsed()
         save_job(job)
         await emit_job_event(job_id, {
             "type": "step",
             "step": "visuals",
             "status": "running",
-            "message": msg,
+            "message": "Scoring candidates against subject, environment, action, and negative filters...",
             "elapsed_sec": elapsed()
         })
 
@@ -271,7 +275,6 @@ async def execute_job_pipeline(job_id: str) -> None:
         uploaded_asset_paths = []
         logo_path = None
         for asset_id in job.options.asset_ids:
-            # Check uploads directory
             for f in UPLOADS_DIR.iterdir():
                 if f.name.startswith(asset_id):
                     if "logo" in f.name.lower():
@@ -286,16 +289,50 @@ async def execute_job_pipeline(job_id: str) -> None:
             theme=plan.theme,
             job_dir=job_dir,
             uploaded_asset_paths=uploaded_asset_paths,
-            aspect_ratio=job.options.aspect_ratio or "9:16"
+            aspect_ratio=job.options.aspect_ratio or "9:16",
+            understanding=understanding
         )
+
+        # Store Step 13 scene records
+        scene_records = []
+        for s in plan.scenes:
+            scene_records.append({
+                "scene": s.id,
+                "intent": s.intent or s.visual_description,
+                "query": s.visual_query,
+                "selectedMedia": s.selectedMedia,
+                "relevanceScore": s.relevanceScore or 0.0,
+                "status": s.status or "matched"
+            })
+        job.scenes = scene_records
+        save_job(job)
 
         await emit_job_event(job_id, {
             "type": "step",
             "step": "visuals",
             "status": "done",
-            "message": "All visual assets harvested and pre-processed",
+            "message": "All visual assets harvested and relevance-verified (threshold >= 0.70)",
             "elapsed_sec": elapsed()
         })
+
+        # Filter out scenes where no relevant visual met threshold (Step 7: Do not force unrelated video)
+        valid_indices = [i for i, clip in enumerate(raw_visual_clips) if clip is not None]
+        if not valid_indices:
+            raise Exception(
+                "No scene visuals could be sourced with high semantic relevance for this prompt. "
+                "Unrelated footage was rejected to maintain visual integrity."
+            )
+
+        if len(valid_indices) < len(plan.scenes):
+            skipped = len(plan.scenes) - len(valid_indices)
+            logger.warning(
+                "[VIDEO] %d of %d scenes had no relevant visual — continuing with %d verified scenes",
+                skipped, len(plan.scenes), len(valid_indices),
+            )
+            plan.scenes = [plan.scenes[i] for i in valid_indices]
+            raw_visual_clips = [c for c in raw_visual_clips if c is not None]
+            save_job(job)
+
 
         # -------------------------------------------------------------
         # STEP 5: Voice (edge-tts / gTTS Speech + Word Timings)
@@ -376,13 +413,15 @@ async def execute_job_pipeline(job_id: str) -> None:
             audio_file = scene_audios[i]
             dur = real_scene_durations[i]
             norm_clip = job_dir / f"scene_{scene.id}_norm.mp4"
+            color_grade = scene.color_grade or (understanding.lighting if 'understanding' in locals() else None)
             normalize_scene_clip(
                 raw_clip, 
                 audio_file, 
                 dur, 
                 norm_clip, 
                 aspect_ratio=aspect_ratio, 
-                resolution=resolution
+                resolution=resolution,
+                color_grade=color_grade
             )
             norm_clips.append(norm_clip)
 
@@ -406,7 +445,7 @@ async def execute_job_pipeline(job_id: str) -> None:
 
         job.video_url = f"/api/videos/{job_id}.mp4"
         job.master_video_url = f"/api/videos/{job_id}_master.mp4"
-        job.watermark_applied = True
+        job.watermark_applied = False
         job.thumbnail_url = f"/api/thumbnails/{job_id}.jpg"
         save_job(job)
 
@@ -414,7 +453,7 @@ async def execute_job_pipeline(job_id: str) -> None:
             "type": "step",
             "step": "compose",
             "status": "done",
-            "message": f"Native {aspect_ratio} master preserved & delivery video rendered with watermark",
+            "message": f"Native {aspect_ratio} master and clean delivery video rendered",
             "elapsed_sec": elapsed()
         })
 
@@ -442,12 +481,19 @@ async def execute_job_pipeline(job_id: str) -> None:
             target_duration=float(job.options.duration)
         )
         job.qc_report = qc_report
+        
+        # Step 13 Standardized Job Structure fields
+        job.jobId = job.job_id
+        job.originalPrompt = job.input
+        job.finalVideoUrl = job.video_url
+        job.qualityScore = qc_report.score
         job.status = "completed"
         job.current_step = "qc"
         job.step_status = "done"
         job.message = f"Video production complete. QC Score: {qc_report.score}/100"
         job.elapsed_sec = elapsed()
         save_job(job)
+
 
         await emit_job_event(job_id, {
             "type": "step",

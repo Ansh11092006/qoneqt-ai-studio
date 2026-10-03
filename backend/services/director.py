@@ -317,7 +317,7 @@ CRITICAL INSTRUCTIONS:
    - camera_movement: e.g. "Slow forward push-in", "Dynamic pan left to right", "Sweeping upward crane", "Static low angle".
    - color_grade: e.g. "Cinematic Teal & Orange", "Cyberpunk Neon", "Bleach Bypass", "Vintage Warm", "Monochrome Noir", "Natural Vibrant".
 4. On-screen text: Punchy, maximum 6 words per scene.
-5. Visual Query: 2 to 4 high-precision stock keywords suitable for Pexels search (e.g. "student laptop dark", "hacker green code").
+5. Visual Query: 2 to 4 high-precision stock keywords suitable for Pixabay search (e.g. "student laptop dark", "hacker green code").
 6. Theme: Provide a matching Theme object including mood, hex palette (bg1, bg2, accent, text), background_type, loading_style, and exactly 7 loading_messages.
    Suggested background_type: {detected_theme.background_type}
    Suggested loading_style: {detected_theme.loading_style}

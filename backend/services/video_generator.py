@@ -12,10 +12,10 @@ from pydantic import BaseModel, Field
 
 from backend.config import (
     get_video_provider, get_video_api_key, get_replicate_token,
-    get_video_model, get_gemini_key, get_pexels_key,
+    get_video_model, get_gemini_key, get_pixabay_key,
     FFMPEG_BIN, JOBS_DIR, DATA_DIR, get_watermark_defaults
 )
-from backend.services.media import fetch_pexels_video, fetch_pexels_photo, render_ken_burns_video
+from backend.services.media import fetch_pixabay_video, fetch_pixabay_photo, render_ken_burns_video
 
 logger = logging.getLogger("video_generator")
 logging.basicConfig(level=logging.INFO)
@@ -37,6 +37,8 @@ class GenerateVideoRequest(BaseModel):
     duration: int = 5              # 5 or 10
     aspect_ratio: str = "16:9"     # 16:9, 9:16, 1:1
     watermark: Optional[WatermarkOptions] = None
+    generation_config: Optional[Dict[str, Any]] = None
+    asset_ids: List[str] = Field(default_factory=list)  # Uploaded asset IDs to use as visual references
 
 class VideoJobStatus(BaseModel):
     job_id: str
@@ -106,31 +108,52 @@ CAMERA_PROMPTS = {
     "Handheld": "subtle organic handheld camera motion with realistic cinematic shake",
 }
 
-async def enhance_prompt(raw_prompt: str, style: str, camera_motion: str) -> str:
-    """Enhances prompt using Gemini if available, or rich cinematic builder."""
-    gemini_key = get_gemini_key()
-    if gemini_key:
-        try:
-            from google import genai
-            client = genai.Client(api_key=gemini_key)
-            instruction = (
-                f"You are an expert AI Video Prompt Engineer for Hollywood-grade video models. "
-                f"Transform this user idea into a single, highly detailed, visually descriptive video generation prompt. "
-                f"User idea: '{raw_prompt}'\n"
-                f"Style: '{style}'\n"
-                f"Camera Motion: '{camera_motion}'\n"
-                f"Requirements: Output ONLY the enhanced prompt string. Max 60 words. No intro or explanation."
-            )
-            response = await asyncio.to_thread(
-                client.models.generate_content,
-                model="gemini-2.5-flash",
-                contents=instruction,
-            )
-            enhanced = response.text.strip().replace('"', '')
-            if enhanced:
-                return enhanced
-        except Exception as e:
-            logger.warning("Gemini prompt enhancement failed: %s, using local template", e)
+async def enhance_prompt(
+    raw_prompt: str, 
+    style: str, 
+    camera_motion: str,
+    generation_config: Optional[Dict[str, Any]] = None
+) -> str:
+    """Enhances prompt using configured AI provider or rich cinematic builder."""
+    instruction = (
+        f"You are an expert AI Video Prompt Engineer for Hollywood-grade video models. "
+        f"Transform this user idea into a single, highly detailed, visually descriptive video generation prompt. "
+        f"User idea: '{raw_prompt}'\n"
+        f"Style: '{style}'\n"
+        f"Camera Motion: '{camera_motion}'\n"
+        f"Requirements: Output ONLY the enhanced prompt string. Max 60 words. No intro or explanation."
+    )
+
+    async def _gemini_fallback():
+        gemini_key = get_gemini_key()
+        if not gemini_key:
+            return None
+        from google import genai
+        client = genai.Client(api_key=gemini_key)
+        from backend.config import GEMINI_MODEL
+        resp = await asyncio.to_thread(
+            client.models.generate_content,
+            model=GEMINI_MODEL or "gemini-3.8-flash",
+            contents=instruction,
+        )
+        return resp.text.strip().replace('"', '') if resp and resp.text else None
+
+    try:
+        from backend.services.ai_service import dispatch_director_ai, GenerationConfig
+        cfg_obj = None
+        if generation_config:
+            cfg_obj = GenerationConfig(**generation_config)
+
+        res = await dispatch_director_ai(
+            prompt=instruction,
+            system_prompt="You are an expert AI Video Prompt Engineer. Output only the prompt string.",
+            config=cfg_obj,
+            fallback_callable=_gemini_fallback
+        )
+        if res and res.strip():
+            return res.strip().replace('"', '')
+    except Exception as e:
+        logger.warning("Prompt enhancement via provider failed: %s, using local template", e)
 
     # Local template fallback
     style_suffix = STYLE_PROMPTS.get(style, STYLE_PROMPTS["Cinematic"])
@@ -217,58 +240,54 @@ class ReplicateVideoProvider(BaseVideoProvider):
 
         return False
 
-class PexelsCinematicProvider(BaseVideoProvider):
-    """Guarantees a real, high-quality cinematic video is always provided."""
+class PixabayVideoProvider(BaseVideoProvider):
+    """Finds relevant video clips from Pixabay based on semantic prompt understanding and scoring."""
     async def generate(self, prompt: str, aspect_ratio: str, duration: int, output_path: Path) -> bool:
-        # Extract main subject keywords for Pexels search
-        clean_words = [w for w in re.findall(r'\b[A-Za-z0-9]+\b', prompt) if len(w) > 2 and w.lower() not in ["and", "the", "for", "with", "shot", "cinematic", "film", "lighting", "resolution", "ultra", "style"]]
-        query = " ".join(clean_words[:3]) if clean_words else "cinematic animation"
+        from backend.models import Scene
+        from backend.services.prompt_engine import understand_prompt
+        from backend.services.media_provider.pixabay_provider import PixabayProvider as SemanticPixabayProvider
 
-        temp_video = output_path.parent / f"temp_pexels_vid_{int(time.time())}.mp4"
-        if await fetch_pexels_video(query, duration, temp_video, aspect_ratio):
-            # Trim/normalize to target duration
-            cmd = [
-                FFMPEG_BIN, "-y",
-                "-i", str(temp_video),
-                "-t", str(duration),
-                "-c:v", "libx264",
-                "-preset", "ultrafast",
-                "-pix_fmt", "yuv420p",
-                str(output_path)
-            ]
-            subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-            if temp_video.exists():
-                temp_video.unlink(missing_ok=True)
-            return True
+        # Step 1: Deep prompt understanding
+        understanding = await understand_prompt(prompt)
 
-        # Photo Ken Burns motion fallback
-        temp_photo = output_path.parent / f"temp_pexels_photo_{int(time.time())}.jpg"
-        if await fetch_pexels_photo(query, temp_photo, aspect_ratio):
-            if render_ken_burns_video(temp_photo, duration, output_path, aspect_ratio):
-                if temp_photo.exists():
-                    temp_photo.unlink(missing_ok=True)
+        # Step 2: Formulate targeted visual query
+        visual_query = f"{understanding.mainSubject} {understanding.environment}".strip()
+        words = visual_query.split()
+        if len(words) > 3:
+            visual_query = " ".join(words[:3])
+
+        scene = Scene(
+            id=1,
+            narration=prompt,
+            on_screen_text=understanding.mainSubject[:24],
+            visual_query=visual_query,
+            visual_description=prompt,
+            duration_sec=float(duration),
+            intent=understanding.action or prompt,
+            requiredVisuals=understanding.objects or [understanding.mainSubject, understanding.environment],
+            negativeConcepts=["office meeting", "coffee shop", "cooking", "traffic", "cars", "retail store"],
+            fallback_queries=[understanding.mainSubject, understanding.topic, understanding.environment]
+        )
+
+        semantic_prov = SemanticPixabayProvider()
+        match_res = await semantic_prov.acquire_scene_visual(
+            scene=scene,
+            target_duration=float(duration),
+            aspect_ratio=aspect_ratio,
+            output_path=output_path,
+            understanding=understanding
+        )
+
+        if match_res.status in ("matched", "ai_generated") and match_res.media_path:
+            p = Path(match_res.media_path)
+            if p.exists() and p.stat().st_size > 1000:
+                logger.info("[VIDEO] Acquired semantically verified footage (score=%.2f): %s",
+                            match_res.relevance_score, match_res.selected_media)
                 return True
 
-        # Local styled video generator
-        from backend.models import Theme, Palette
-        dummy_theme = Theme(
-            mood="Cinematic",
-            palette=Palette(bg1="#09080a", bg2="#141118", accent="#ff0055", text="#ffffff"),
-            background_type="particles",
-            loading_style="pulse",
-            loading_messages=[
-                "Initializing neural video engine...",
-                "Synthesizing cinematic visuals...",
-                "Rendering motion dynamics...",
-                "Calibrating lighting and shadows...",
-                "Enhancing frame resolution...",
-                "Composing final video stream...",
-                "Applying watermark branding..."
-            ]
-        )
-        from backend.services.media import render_gradient_card
-        render_gradient_card(prompt[:30], float(duration), dummy_theme, output_path, aspect_ratio)
-        return True
+        logger.error("[VIDEO] No visual candidate reached the 0.70 relevance threshold for '%s'", prompt)
+        return False
+
 
 def get_provider(provider_name: str) -> BaseVideoProvider:
     name = provider_name.lower()
@@ -336,9 +355,13 @@ def apply_ffmpeg_watermark(
         FFMPEG_BIN, "-y",
         "-i", str(input_video),
         "-vf", drawtext_filter,
+        "-map", "0:v:0",
+        "-map", "0:a:0?",
         "-c:v", "libx264",
         "-preset", "ultrafast",
         "-pix_fmt", "yuv420p",
+        "-c:a", "aac",
+        "-b:a", "192k",
         str(output_video)
     ]
     try:
@@ -370,6 +393,35 @@ def generate_thumbnail(video_path: Path, thumbnail_path: Path) -> bool:
 # -------------------------------------------------------------
 # 4. MASTER VIDEO GENERATION ORCHESTRATOR
 # -------------------------------------------------------------
+def _resolve_asset_visual_context(asset_ids: List[str]) -> str:
+    """
+    Reads persisted asset intelligence metadata for uploaded assets and
+    returns a comma-separated string of semantic tags / descriptions that
+    can be appended to the visual search query.
+    """
+    from backend.config import DATA_DIR
+    meta_dir = DATA_DIR / "asset_metadata"
+    tags: List[str] = []
+    for asset_id in asset_ids:
+        meta_file = meta_dir / f"{asset_id}.json"
+        if not meta_file.exists():
+            continue
+        try:
+            import json as _json
+            data = _json.loads(meta_file.read_text(encoding="utf-8"))
+            analysis = data.get("analysis", {})
+            # Pull semantic tags / dominant subjects
+            for field in ("subjects", "tags", "keywords", "description", "visual_style"):
+                val = analysis.get(field)
+                if isinstance(val, list):
+                    tags.extend([str(v) for v in val[:3]])
+                elif isinstance(val, str) and val.strip():
+                    tags.append(val.strip()[:60])
+        except Exception:
+            pass
+    return ", ".join(dict.fromkeys(tags))  # deduplicate while preserving order
+
+
 async def execute_video_generation(job_id: str, request: GenerateVideoRequest) -> None:
     job = get_video_job(job_id)
     if not job:
@@ -382,13 +434,21 @@ async def execute_video_generation(job_id: str, request: GenerateVideoRequest) -
     thumbnail = job_dir / "thumb.jpg"
 
     try:
-        # Step 1: Enhance prompt
+        # Step 1: Enhance prompt (optionally enriched with uploaded asset context)
         job.status = "enhancing_prompt"
         job.progress = 15
         save_video_job(job)
         await asyncio.sleep(0.3)
 
-        enhanced = await enhance_prompt(request.prompt, request.style, request.camera_motion)
+        # Inject uploaded-asset semantic context into the prompt before enhancement
+        base_prompt = request.prompt
+        if request.asset_ids:
+            asset_context = await asyncio.to_thread(_resolve_asset_visual_context, request.asset_ids)
+            if asset_context:
+                base_prompt = f"{base_prompt}. Visual references: {asset_context}"
+                logger.info("[VIDEO] Enriched prompt with %d uploaded asset(s): %s", len(request.asset_ids), asset_context[:120])
+
+        enhanced = await enhance_prompt(base_prompt, request.style, request.camera_motion, request.generation_config)
         job.enhanced_prompt = enhanced
         job.progress = 30
         save_video_job(job)
@@ -405,10 +465,18 @@ async def execute_video_generation(job_id: str, request: GenerateVideoRequest) -
         success = await provider.generate(enhanced, request.aspect_ratio, request.duration, raw_video)
         
         if not success or not raw_video.exists() or raw_video.stat().st_size < 1000:
-            logger.info("AI provider did not return video. Using Pexels cinematic video engine...")
-            fallback = PexelsCinematicProvider()
-            await fallback.generate(enhanced, request.aspect_ratio, request.duration, raw_video)
-            provider_used = "Pexels Cinematic Engine"
+            logger.info("[VIDEO] AI provider did not return video. Trying Pixabay video engine...")
+            fallback = PixabayVideoProvider()
+            fallback_ok = await fallback.generate(enhanced, request.aspect_ratio, request.duration, raw_video)
+            if fallback_ok:
+                provider_used = "Qoneqt Cinematic B-Roll Engine"
+            else:
+                job.status = "failed"
+                job.error = "Video generation failed: no video could be sourced from any provider."
+                job.progress = 0
+                save_video_job(job)
+                logger.error("[VIDEO] Job %s failed: all video sources exhausted", job_id)
+                return
 
         job.provider_used = provider_used
         job.status = "downloading_video"
@@ -416,13 +484,17 @@ async def execute_video_generation(job_id: str, request: GenerateVideoRequest) -
         save_video_job(job)
         await asyncio.sleep(0.3)
 
-        # Step 3: Burn in Watermark via FFmpeg
-        job.status = "applying_watermark"
+        # Step 3: Finalize Video (Clean, no watermark overlay)
+        job.status = "processing_video"
         job.progress = 85
         save_video_job(job)
 
         wm = request.watermark or WatermarkOptions(**get_watermark_defaults())
-        apply_ffmpeg_watermark(raw_video, watermarked_video, wm, request.aspect_ratio)
+        if wm.enabled and wm.text.strip():
+            apply_ffmpeg_watermark(raw_video, watermarked_video, wm, request.aspect_ratio)
+        else:
+            import shutil
+            shutil.copy2(raw_video, watermarked_video)
 
         # Step 4: Generate Thumbnail
         generate_thumbnail(watermarked_video, thumbnail)

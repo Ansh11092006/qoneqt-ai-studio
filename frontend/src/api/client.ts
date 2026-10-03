@@ -209,6 +209,8 @@ export async function uploadAsset(file: File): Promise<{
   asset_id: string;
   kind: "script" | "media" | "logo";
   url: string;
+  status: string;
+  analysisStatus: string;
   text?: string;
 }> {
   const formData = new FormData();
@@ -221,6 +223,18 @@ export async function uploadAsset(file: File): Promise<{
     const err = await res.json().catch(() => ({ detail: "Upload failed" }));
     throw new Error(err.detail || "Upload failed");
   }
+  return res.json();
+}
+
+export async function triggerAssetAnalysis(assetId: string): Promise<{ asset_id: string; analysisStatus: string }> {
+  const res = await fetch(`${API_BASE}/api/assets/${assetId}/analyze`, { method: "POST" });
+  if (!res.ok) return { asset_id: assetId, analysisStatus: "pending" };
+  return res.json();
+}
+
+export async function pollAssetStatus(assetId: string): Promise<{ asset_id: string; analysisStatus: string; analysis: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE}/api/assets/${assetId}/status`);
+  if (!res.ok) return { asset_id: assetId, analysisStatus: "failed", analysis: {} };
   return res.json();
 }
 
@@ -420,7 +434,11 @@ export interface ProviderStatus {
     model: string;
     status: string;
   };
-  pexels: {
+  media_engine?: {
+    connected: boolean;
+    status: string;
+  };
+  broll_engine?: {
     connected: boolean;
     status: string;
   };
@@ -442,6 +460,8 @@ export interface GenerateVideoPayload {
   duration: 5 | 10;
   aspect_ratio: "16:9" | "9:16" | "1:1";
   watermark?: WatermarkPayload;
+  generation_config?: GenerationConfigPayload;
+  asset_ids?: string[];  // Uploaded asset IDs to send to backend
 }
 
 export interface VideoJobResponse {
@@ -483,6 +503,153 @@ export async function fetchVideoStatus(jobId: string): Promise<VideoJobResponse>
 export async function fetchProviderStatus(): Promise<ProviderStatus> {
   const res = await fetch(`${API_BASE}/api/providers/status`);
   if (!res.ok) throw new Error("Failed to fetch provider status");
+  return res.json();
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   AI PROVIDER & MODEL REGISTRY INTERFACES
+   ═════════════════════════════════════════════════════════════════ */
+export interface FreeModelItem {
+  id: string;
+  name: string;
+  type: "text" | "image" | "video";
+  provider: "qoneqt";
+  free: boolean;
+  description: string;
+  badge: string;
+  recommended_for?: string;
+}
+
+export interface FreeModelCatalog {
+  text: FreeModelItem[];
+  image: FreeModelItem[];
+  video: FreeModelItem[];
+}
+
+export interface SupportedProviderSpec {
+  id: string;
+  name: string;
+  description: string;
+  capabilities: Array<"text" | "director" | "video" | "image">;
+  default_models: string[];
+  default_model: string;
+  default_base_url: string;
+  requires_base_url: boolean;
+  docs_url: string;
+  key_placeholder: string;
+}
+
+export interface UserProviderConfig {
+  provider_id: string;
+  name: string;
+  masked_key: string;
+  has_key: boolean;
+  base_url: string;
+  selected_model: string;
+  available_models: string[];
+  capabilities: string[];
+  status: "configured" | "verified" | "failed";
+  last_tested?: number | null;
+  last_error?: string | null;
+  updated_at?: number;
+}
+
+export interface UserProviderSettingsResponse {
+  user_id: string;
+  active_mode: "qoneqt" | "user";
+  active_provider_id: string | null;
+  active_model: string | null;
+  allow_fallback: boolean;
+  providers: Record<string, UserProviderConfig>;
+  catalog: Record<string, SupportedProviderSpec>;
+}
+
+export interface TestConnectionResult {
+  success: boolean;
+  message?: string;
+  models?: string[];
+  error?: string;
+}
+
+export interface GenerationConfigPayload {
+  provider: "qoneqt" | "user";
+  provider_id?: string;
+  model?: string;
+  allow_fallback?: boolean;
+}
+
+export async function fetchModelRegistry(): Promise<{
+  free_models: FreeModelCatalog;
+  providers_catalog: Record<string, SupportedProviderSpec>;
+  default_mode: string;
+}> {
+  const res = await fetch(`${API_BASE}/api/models`);
+  if (!res.ok) throw new Error("Failed to fetch model registry");
+  return res.json();
+}
+
+export async function fetchUserProviders(): Promise<UserProviderSettingsResponse> {
+  const res = await fetch(`${API_BASE}/api/user-providers`);
+  if (!res.ok) throw new Error("Failed to fetch user providers");
+  return res.json();
+}
+
+export async function testUserProvider(data: {
+  provider_id: string;
+  api_key?: string;
+  base_url?: string;
+}): Promise<TestConnectionResult> {
+  const res = await fetch(`${API_BASE}/api/user-providers/test`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Provider test failed" }));
+    return { success: false, error: err.error || err.detail || "Provider test failed" };
+  }
+  return res.json();
+}
+
+export async function saveUserProvider(data: {
+  provider_id: string;
+  api_key?: string;
+  model?: string;
+  base_url?: string;
+  available_models?: string[];
+}): Promise<UserProviderSettingsResponse> {
+  const res = await fetch(`${API_BASE}/api/user-providers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to save provider" }));
+    throw new Error(err.detail || "Failed to save provider");
+  }
+  return res.json();
+}
+
+export async function deleteUserProvider(provider_id: string): Promise<UserProviderSettingsResponse> {
+  const res = await fetch(`${API_BASE}/api/user-providers/${provider_id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete provider");
+  return res.json();
+}
+
+export async function setActiveProviderSettings(data: {
+  active_mode?: "qoneqt" | "user";
+  active_provider_id?: string | null;
+  active_model?: string | null;
+  allow_fallback?: boolean;
+}): Promise<UserProviderSettingsResponse> {
+  const res = await fetch(`${API_BASE}/api/user-providers/active`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update active provider settings");
   return res.json();
 }
 

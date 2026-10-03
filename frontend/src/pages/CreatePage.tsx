@@ -61,9 +61,18 @@ const DIRECTOR_DECISIONS = [
   { label: "Editing Style", value: "Hollywood Cut", icon: <Clapperboard size={13} /> },
 ];
 
+import { useSearchParams } from "react-router-dom";
+import { getUniverseConfig } from "@/config/universeConfig";
+
 export const CreatePage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const universeParam = searchParams.get("universe");
+  const promptParam = searchParams.get("prompt");
+
+  const targetUniverse = universeParam ? getUniverseConfig(universeParam) : null;
+
   const [assetIds, setAssetIds] = useState<string[]>([]);
-  const [externalPrompt, setExternalPrompt] = useState("");
+  const [externalPrompt, setExternalPrompt] = useState(promptParam || (targetUniverse ? targetUniverse.heroPrompt : ""));
   const [selectedMode, setSelectedMode] = useState("cinematic");
 
   return (
@@ -76,8 +85,24 @@ export const CreatePage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center space-y-3"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#ff0055]/10 border border-[#ff0055]/30 text-xs font-mono text-[#ff0055]">
-            <Film size={12} /> CINEMATIC AI DIRECTOR · ACTIVE
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#ff0055]/10 border border-[#ff0055]/30 text-xs font-mono text-[#ff0055]">
+              <Film size={12} /> CINEMATIC AI DIRECTOR · ACTIVE
+            </div>
+            {targetUniverse && (
+              <div
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono border font-bold"
+                style={{
+                  borderColor: `${targetUniverse.color}50`,
+                  backgroundColor: `${targetUniverse.color}15`,
+                  color: targetUniverse.color,
+                  boxShadow: `0 0 15px ${targetUniverse.color}30`,
+                }}
+              >
+                <span>{targetUniverse.emoji}</span>
+                <span>DESTINATION: {targetUniverse.title}</span>
+              </div>
+            )}
           </div>
           <h1 className="font-heading text-4xl sm:text-5xl font-black text-white tracking-tight">
             Qoneqt <span className="text-[#ff0055]">Cinematic AI Director</span>
@@ -203,12 +228,7 @@ export const CreatePage: React.FC = () => {
           />
         </motion.div>
 
-        {/* ── Watermark Notice ── */}
         <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 text-[10px] text-white/25 font-mono">
-            <Shield size={10} />
-            All generated videos include QONEQT watermark
-          </div>
           <p className="text-[10px] text-white/20 font-mono">
             Pipeline: Prompt → AI Research → Script → Storyboard → Visual Gen → Voice → Animation → Editing → QC → Final Render
           </p>

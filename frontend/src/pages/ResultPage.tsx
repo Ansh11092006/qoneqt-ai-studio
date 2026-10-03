@@ -3,14 +3,14 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Download, Share2, CheckCircle2, XCircle, Copy, Check,
-  Play, ArrowLeft, Star, RefreshCw, Wand2, Layers, Droplets,
+  Play, ArrowLeft, Star, RefreshCw, Wand2, Layers,
   Zap, AlertTriangle, Sparkles, ChevronRight, Film, Eye,
   Sliders, RotateCcw, Shield, Mic, Volume2, Type, Users,
   Monitor, Award, TrendingUp, Globe, Lock, Target, Radio, Loader2
 } from "lucide-react";
 import {
-  JobStatus, QCCheckItem, WatermarkConfig, VideoDiagnosis,
-  diagnoseJob, regenerateJob, applyWatermark, autoFixQC
+  JobStatus, QCCheckItem, VideoDiagnosis,
+  diagnoseJob, regenerateJob, autoFixQC
 } from "@/api/client";
 
 /* ═══════════════════════════════════════════════════════
@@ -63,7 +63,7 @@ const ANIM_STYLES = `
 .anim-global-ready { animation: globalReadyPulse 2s ease-in-out infinite; }
 `;
 
-type TabId = "scenes" | "plan" | "qc" | "regenerate" | "watermark";
+type TabId = "scenes" | "plan" | "qc" | "regenerate";
 
 /* ── 10 QC Categories ── */
 interface QCCategory {
@@ -80,7 +80,7 @@ const QC_CATEGORIES: QCCategory[] = [
   { id: "audio_sync", label: "Audio Sync", icon: <Volume2 size={14} />, maxPoints: 10 },
   { id: "voice_clarity", label: "Voice Clarity", icon: <Mic size={14} />, maxPoints: 10 },
   { id: "scene_consistency", label: "Scene Consistency", icon: <Film size={14} />, maxPoints: 10 },
-  { id: "branding_watermark", label: "Branding & Watermark", icon: <Shield size={14} />, maxPoints: 10 },
+  { id: "production_standards", label: "Production Standards", icon: <Shield size={14} />, maxPoints: 10 },
   { id: "caption_accuracy", label: "Caption Accuracy", icon: <Type size={14} />, maxPoints: 10 },
   { id: "community_relevance", label: "Community Relevance", icon: <Users size={14} />, maxPoints: 10 },
   { id: "platform_optimization", label: "Platform Optimization", icon: <Monitor size={14} />, maxPoints: 10 },
@@ -152,13 +152,7 @@ const REGEN_COMPONENTS = [
   { id: "visual_style", label: "Visual Style", icon: "🎨" },
   { id: "thumbnail", label: "Thumbnail Only", icon: "🖼️" },
   { id: "cta", label: "CTA Only", icon: "📣" },
-  { id: "watermark", label: "Watermark Only", icon: "💧" },
 ];
-
-const DEFAULT_WM: WatermarkConfig = {
-  type: "qoneqt", text: "Qoneqt AI Studio",
-  position: "top-right", opacity: 0.8, size: "medium", animation: "static",
-};
 
 /* ═══════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -176,9 +170,6 @@ export const ResultPage: React.FC = () => {
   const [regenComponents, setRegenComponents] = useState<string[]>([]);
   const [regenLoading, setRegenLoading] = useState(false);
   const [regenNewJobId, setRegenNewJobId] = useState<string | null>(null);
-  const [watermark, setWatermark] = useState<WatermarkConfig>(DEFAULT_WM);
-  const [wmApplying, setWmApplying] = useState(false);
-  const [wmApplied, setWmApplied] = useState(false);
   const [autoFixing, setAutoFixing] = useState(false);
   const [scanAnimDone, setScanAnimDone] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -217,7 +208,7 @@ export const ResultPage: React.FC = () => {
                 ...(prev || {}),
                 job_id: vdata.job_id,
                 status: vdata.status,
-                video_url: vdata.watermarked_video_url || vdata.video_url,
+                video_url: vdata.video_url || vdata.watermarked_video_url,
                 thumbnail_url: vdata.thumbnail_url,
                 input: vdata.prompt,
                 options: { duration: vdata.duration || 5, aspect_ratio: vdata.aspect_ratio || "16:9", video_style: vdata.style || "Cinematic" } as any
@@ -264,7 +255,7 @@ export const ResultPage: React.FC = () => {
     if (targets.length === 0) return;
     setRegenLoading(true);
     try {
-      const res = await regenerateJob(id, { components: targets as any, watermark_config: watermark });
+      const res = await regenerateJob(id, { components: targets as any });
       if (res.new_job_id) setRegenNewJobId(res.new_job_id);
     } catch { /* ignore */ }
     finally { setRegenLoading(false); }
@@ -279,22 +270,6 @@ export const ResultPage: React.FC = () => {
       setScanAnimDone(false);
     } catch { /* ignore */ }
     finally { setAutoFixing(false); }
-  };
-
-  const handleApplyWatermark = async () => {
-    if (!id) return;
-    setWmApplying(true);
-    try {
-      await applyWatermark(id, watermark);
-      setWmApplied(true);
-      setTimeout(() => setWmApplied(false), 3000);
-      if (videoRef.current) {
-        videoRef.current.src = `${job?.video_url}?t=${Date.now()}`;
-        videoRef.current.load();
-        videoRef.current.play().catch(() => {});
-      }
-    } catch { /* ignore */ }
-    finally { setWmApplying(false); }
   };
 
   const handleCopy = () => {
@@ -465,7 +440,7 @@ export const ResultPage: React.FC = () => {
                 <a href={`/api/videos/${job.job_id}/download`} download={`${job.job_id}_qoneqt.mp4`}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white transition-all hover:brightness-110 shadow-[0_0_20px_rgba(255,0,85,0.4)] cursor-pointer"
                   style={{ background: `linear-gradient(135deg, ${accent}, ${accent}99)` }}>
-                  <Download size={14} /> Download Watermarked Video
+                  <Download size={14} /> Download Video
                 </a>
               )}
               {!published ? (
@@ -557,14 +532,14 @@ export const ResultPage: React.FC = () => {
           <div className="rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 overflow-hidden shadow-2xl">
             {/* Tab Navigation */}
             <div className="flex border-b border-white/10 overflow-x-auto bg-white/[0.02]">
-              {(["scenes", "plan", "qc", "regenerate", "watermark"] as TabId[]).map((t) => {
+              {(["scenes", "plan", "qc", "regenerate"] as TabId[]).map((t) => {
                 const labels: Record<TabId, string> = {
                   scenes: "Script & Scenes", plan: "JSON Plan",
-                  qc: "AI Quality Center", regenerate: "AI Regeneration", watermark: "Watermark Engine",
+                  qc: "AI Quality Center", regenerate: "AI Regeneration",
                 };
                 const icons: Record<TabId, React.ReactNode> = {
                   scenes: <Layers size={13} />, plan: <Copy size={13} />,
-                  qc: <Target size={13} />, regenerate: <RefreshCw size={13} />, watermark: <Droplets size={13} />,
+                  qc: <Target size={13} />, regenerate: <RefreshCw size={13} />,
                 };
                 return (
                   <button key={t} onClick={() => setTab(t)}
@@ -718,8 +693,8 @@ export const ResultPage: React.FC = () => {
                                   <p className="text-emerald-400 font-bold">✓ Passed</p>
                                 </div>
                                 <div className="p-2 rounded-lg bg-black/40 border border-[#ffd700]/20">
-                                  <span className="text-white/40">Watermark</span>
-                                  <p className="text-emerald-400 font-bold">✓ Applied</p>
+                                  <span className="text-white/40">Standards</span>
+                                  <p className="text-emerald-400 font-bold">✓ Verified</p>
                                 </div>
                               </div>
 
@@ -996,102 +971,6 @@ export const ResultPage: React.FC = () => {
                       style={{ background: regenComponents.length > 0 ? `linear-gradient(135deg, ${accent}, ${accent}88)` : "rgba(255,255,255,0.05)" }}>
                       {regenLoading ? <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> : <RefreshCw size={14} />}
                       {regenLoading ? "Regenerating..." : `Regenerate Selected (${regenComponents.length})`}
-                    </button>
-                  </motion.div>
-                )}
-
-                {/* ════════ TAB: WATERMARK ENGINE ════════ */}
-                {tab === "watermark" && (
-                  <motion.div key="watermark" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Shield size={14} style={{ color: accent }} />
-                      <span className="text-xs font-semibold text-white">Watermark Engine</span>
-                      <span className="text-[10px] text-white/30 ml-auto">Master preserved · Fast re-burn</span>
-                    </div>
-
-                    {/* Type */}
-                    <div className="space-y-2">
-                      <p className="text-[10px] text-white/40 font-semibold">STYLE TYPE</p>
-                      <div className="flex flex-wrap gap-2">
-                        {(["qoneqt", "creator", "text", "hybrid"] as const).map((t) => (
-                          <button key={t} onClick={() => setWatermark(w => ({ ...w, type: t }))}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border capitalize transition-all ${
-                              watermark.type === t ? "text-white border-[var(--accent)]" : "text-white/40 border-white/10 hover:border-white/20"
-                            }`}
-                            style={watermark.type === t ? { background: `${accent}18` } : {}}>
-                            {t}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Text */}
-                    <div className="space-y-2">
-                      <p className="text-[10px] text-white/40 font-semibold">LABEL TEXT</p>
-                      <input value={watermark.text}
-                        onChange={(e) => setWatermark(w => ({ ...w, text: e.target.value }))}
-                        className="w-full px-3 py-2 rounded-xl bg-white/8 border border-white/10 text-sm text-white focus:outline-none focus:border-[var(--accent)] transition-colors"
-                        placeholder="Brand or creator name..." />
-                    </div>
-
-                    {/* Position */}
-                    <div className="space-y-2">
-                      <p className="text-[10px] text-white/40 font-semibold">POSITION</p>
-                      <div className="grid grid-cols-3 gap-1.5 w-36">
-                        {(["top-left", "top-right", "center", "bottom-left", "bottom-right"] as const).map((pos) => {
-                          const gridMap: Record<string, string> = {
-                            "top-left": "col-start-1 row-start-1", "top-right": "col-start-3 row-start-1",
-                            "center": "col-start-2 row-start-2",
-                            "bottom-left": "col-start-1 row-start-3", "bottom-right": "col-start-3 row-start-3",
-                          };
-                          return (
-                            <button key={pos} onClick={() => setWatermark(w => ({ ...w, position: pos }))}
-                              className={`${gridMap[pos]} w-9 h-9 rounded-lg border transition-all ${
-                                watermark.position === pos ? "border-[var(--accent)] bg-[var(--accent)]/20" : "border-white/10 hover:border-white/20 bg-white/5"
-                              }`} title={pos} />
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Opacity */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-[10px] text-white/40 font-semibold">OPACITY</p>
-                        <span className="text-[10px] text-white/40 font-mono">{Math.round(watermark.opacity * 100)}%</span>
-                      </div>
-                      <input type="range" min={0} max={100} value={Math.round(watermark.opacity * 100)}
-                        onChange={(e) => setWatermark(w => ({ ...w, opacity: parseInt(e.target.value) / 100 }))}
-                        className="w-full accent-[var(--accent)]" />
-                    </div>
-
-                    {/* Size */}
-                    <div className="space-y-2">
-                      <p className="text-[10px] text-white/40 font-semibold">SIZE</p>
-                      <div className="flex gap-2">
-                        {(["small", "medium", "large"] as const).map((s) => (
-                          <button key={s} onClick={() => setWatermark(w => ({ ...w, size: s }))}
-                            className={`flex-1 py-1.5 rounded-lg text-xs capitalize border transition-all ${
-                              watermark.size === s ? "border-[var(--accent)] text-white" : "border-white/10 text-white/40 hover:border-white/20"
-                            }`}
-                            style={watermark.size === s ? { background: `${accent}18` } : {}}>
-                            {s}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {wmApplied && (
-                      <div className="p-2.5 rounded-xl bg-emerald-400/10 border border-emerald-400/20 text-xs text-emerald-400 flex items-center gap-2">
-                        <CheckCircle2 size={12} /> Watermark applied to master!
-                      </div>
-                    )}
-
-                    <button onClick={handleApplyWatermark} disabled={wmApplying}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
-                      style={{ background: `linear-gradient(135deg, ${accent}, ${accent}88)` }}>
-                      {wmApplying ? <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> : <Droplets size={14} />}
-                      {wmApplying ? "Applying..." : "Apply Watermark"}
                     </button>
                   </motion.div>
                 )}

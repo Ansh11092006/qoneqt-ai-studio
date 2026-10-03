@@ -4,6 +4,7 @@
   "description": "One idea in. One publish-ready video out.",
   "scripts": {
     "start": "concurrently --kill-others-on-fail --prefix-colors \"cyan,magenta\" --names \"API,UI\" \"npm run api\" \"npm run ui\"",
+    "dev": "npm run start",
     "api": ".venv\\Scripts\\python.exe -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload",
     "ui": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",

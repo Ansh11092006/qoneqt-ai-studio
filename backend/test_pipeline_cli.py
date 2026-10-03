@@ -31,7 +31,7 @@ def create_sample_uploaded_asset(dest_path: Path):
 
 async def main():
     print("=" * 60)
-    print("PHASE 2 CLI TEST: Full Video Pipeline (Pexels + TTS + Captions + FFmpeg)")
+    print("PHASE 2 CLI TEST: Full Video Pipeline (Pixabay + TTS + Captions + FFmpeg)")
     print("=" * 60)
 
     test_job_id = "test_phase2_job"
@@ -79,7 +79,7 @@ async def main():
         current_time += duration
         print(f"    -> Audio generated: {audio_path.name} ({duration:.2f}s, {len(word_boundaries)} words timed)")
 
-    print("\n[Step 4/5] Preparing Visuals (Upload Override for Scene 1, Pexels/Cards for others)...")
+    print("\n[Step 4/5] Preparing Visuals (Upload Override for Scene 1, Pixabay/Cards for others)...")
     visual_clips = []
     for i, scene in enumerate(test_scenes):
         dur = scene_durations[i]

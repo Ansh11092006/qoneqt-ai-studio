@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 import logging
 import subprocess
 from pathlib import Path
@@ -46,11 +47,13 @@ def normalize_scene_clip(
     target_duration: float,
     output_clip: Path,
     aspect_ratio: str = "9:16",
-    resolution: str = "1080p"
+    resolution: str = "1080p",
+    color_grade: Optional[str] = None
 ) -> bool:
     """
     Normalizes a scene video into exactly target dimensions according to aspect_ratio & resolution,
     30fps, yuv420p, loops/trims video to match target_duration, and attaches the audio track.
+    Applies color grading for story continuity across scenes (Step 9).
     """
     w, h = get_dimensions(aspect_ratio, resolution)
     
@@ -61,6 +64,16 @@ def normalize_scene_clip(
         f"fps=30,"
         f"format=yuv420p"
     )
+
+    # Step 9: Story continuity color grade
+    if color_grade:
+        cg_lower = color_grade.lower()
+        if any(k in cg_lower for k in ["blue", "cyber", "soc", "night", "dark"]):
+            vf += ",eq=contrast=1.10:brightness=-0.02:saturation=1.12,colorbalance=rs=-0.04:gs=-0.01:bs=0.07:rm=-0.02:gm=0.0:bm=0.05"
+        elif "teal" in cg_lower or "orange" in cg_lower:
+            vf += ",eq=contrast=1.08:saturation=1.15,colorbalance=rs=-0.02:gs=0.0:bs=0.04"
+        elif "warm" in cg_lower or "vintage" in cg_lower or "gold" in cg_lower:
+            vf += ",eq=contrast=1.05:saturation=1.10,colorbalance=rs=0.05:gs=0.02:bs=-0.03"
 
     cmd = [
         FFMPEG_BIN, "-y",
@@ -223,6 +236,14 @@ def apply_watermark_to_master(
     accent_hex: str = "ff0055"
 ) -> bool:
     """Applies watermark to an existing master video file without re-rendering scenes."""
+    if not watermark_config or not watermark_config.get("enabled", False):
+        try:
+            shutil.copyfile(master_path, output_path)
+            return True
+        except Exception as e:
+            logger.error("Failed to copy master to output: %s", e)
+            return False
+
     w, h = get_dimensions(aspect_ratio, resolution)
     vf = build_watermark_filter(w, h, watermark_config, accent_hex)
     
@@ -243,6 +264,7 @@ def apply_watermark_to_master(
         return True
     except Exception as e:
         logger.error("Failed to apply watermark to master: %s", e)
+        shutil.copyfile(master_path, output_path)
         return False
 
 def compose_final_video(
@@ -258,8 +280,8 @@ def compose_final_video(
     output_filename: str = "final.mp4"
 ) -> Path:
     """
-    Concatenates normalized scene clips + CTA end card, burns subtitles to create master.mp4,
-    then applies watermark to generate delivery final.mp4. Preserves master for instant re-watermarking.
+    Concatenates normalized scene clips + CTA end card, burns subtitles to create clean final.mp4,
+    and preserves master copy. Zero watermark overlay added by default.
     """
     w, h = get_dimensions(aspect_ratio, resolution)
     master_output = job_dir / "master.mp4"
@@ -295,7 +317,7 @@ def compose_final_video(
     logger.info("Concatenating %d clips for ratio %s in %s...", len(all_clips), aspect_ratio, job_dir)
     subprocess.run(concat_cmd, cwd=str(job_dir), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
 
-    # 2. Burn subtitles -> Create clean MASTER video (no watermark)
+    # 2. Burn subtitles -> Create clean final video directly (no watermark)
     sub_rel_name = ass_subtitles_path.name
     master_cmd = [
         FFMPEG_BIN, "-y",
@@ -307,20 +329,26 @@ def compose_final_video(
         "-pix_fmt", "yuv420p",
         "-c:a", "copy",
         "-movflags", "+faststart",
-        str(master_output.name)
+        str(final_output.name)
     ]
-    logger.info("Rendering clean MASTER MP4 without watermark...")
+    logger.info("Rendering clean final MP4 without watermark...")
     subprocess.run(master_cmd, cwd=str(job_dir), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
 
-    # 3. Apply watermark onto master -> Create DELIVERY video (final.mp4)
-    apply_watermark_to_master(
-        master_path=master_output,
-        output_path=final_output,
-        watermark_config=watermark_config,
-        aspect_ratio=aspect_ratio,
-        resolution=resolution,
-        accent_hex=theme.palette.accent
-    )
+    try:
+        shutil.copyfile(final_output, master_output)
+    except Exception:
+        pass
+
+    # 3. Only apply watermark if explicitly requested and enabled
+    if watermark_config and watermark_config.get("enabled"):
+        apply_watermark_to_master(
+            master_path=master_output,
+            output_path=final_output,
+            watermark_config=watermark_config,
+            aspect_ratio=aspect_ratio,
+            resolution=resolution,
+            accent_hex=theme.palette.accent
+        )
 
     # 4. Generate thumbnail
     thumb_path = job_dir / "thumb.jpg"

@@ -13,6 +13,8 @@ import { LibraryPage } from '@/pages/LibraryPage';
 import { FeedPage } from '@/pages/FeedPage';
 import { AnalyticsPage } from '@/pages/AnalyticsPage';
 import { CommandCenterPage } from '@/pages/CommandCenterPage';
+import { UniversePage } from '@/pages/UniversePage';
+import { ApiConfigurationPage } from '@/pages/ApiConfigurationPage';
 
 const pageVariants = {
   initial: { opacity: 0, y: 16 },
@@ -47,6 +49,8 @@ function AnimatedRoutes() {
         <Route path="/batch" element={<Pg><BatchPage /></Pg>} />
         <Route path="/library" element={<Pg><LibraryPage /></Pg>} />
         <Route path="/feed" element={<Pg><FeedPage /></Pg>} />
+        <Route path="/universe/:id" element={<Pg><UniversePage /></Pg>} />
+        <Route path="/api-configuration" element={<Pg><ApiConfigurationPage /></Pg>} />
       </Routes>
     </AnimatePresence>
   );
@@ -61,11 +65,6 @@ export default function App() {
         <main className="min-h-screen">
           <AnimatedRoutes />
         </main>
-        <footer className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-center py-1.5 pointer-events-none">
-          <span className="text-[9px] font-mono text-white/20">
-            Qoneqt AI Studio · Hackathon Demo · Pipeline Active
-          </span>
-        </footer>
       </BrowserRouter>
     </JobProvider>
   );

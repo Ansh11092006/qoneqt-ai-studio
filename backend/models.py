@@ -35,7 +35,37 @@ class Theme(BaseModel):
         max_length=7
     )
 
-# Scene Specification
+# Prompt Understanding (Step 1)
+class PromptUnderstanding(BaseModel):
+    mainSubject: str = ""
+    topic: str = ""
+    action: str = ""
+    environment: str = ""
+    characters: List[str] = Field(default_factory=list)
+    objects: List[str] = Field(default_factory=list)
+    events: List[str] = Field(default_factory=list)
+    visualStyle: str = ""
+    cameraStyle: str = ""
+    lighting: str = ""
+    mood: str = ""
+    location: str = ""
+    timeOfDay: str = ""
+    sequence: List[str] = Field(default_factory=list)
+    importantDetails: List[str] = Field(default_factory=list)
+    promptType: Optional[str] = "story" # story, explainer, advertisement, documentary, social_short
+
+# Scene Specification & Record (Step 2, 3, 13)
+class SceneRecord(BaseModel):
+    scene: int
+    intent: str
+    query: str
+    selectedMedia: Optional[str] = None
+    relevanceScore: float = 0.0
+    status: str = "matched" # matched, no_relevant_media, ai_generated, retry_failed
+    requiredVisuals: List[str] = Field(default_factory=list)
+    negativeConcepts: List[str] = Field(default_factory=list)
+    mediaType: Optional[str] = "video"
+
 class Scene(BaseModel):
     id: int
     narration: str = Field(description="Spoken voiceover text for this scene")
@@ -47,6 +77,13 @@ class Scene(BaseModel):
     shot_type: Optional[str] = Field(default="Wide Cinematic Shot", description="Cinematic shot category: Drone Shot, Tracking Shot, Orbit Shot, Dolly Zoom, Slow Motion Shot, Close-Up, Wide Cinematic Shot, Establishing Shot, Hero Shot")
     camera_movement: Optional[str] = Field(default="Slow forward push-in", description="Camera trajectory: Pan Left, Crane Up, Orbit 360, Tracking Push")
     color_grade: Optional[str] = Field(default="Cinematic Teal & Orange", description="Color grading palette LUT preset")
+    intent: Optional[str] = Field(default=None, description="Narrative intent and action of this scene")
+    requiredVisuals: List[str] = Field(default_factory=list, description="Mandatory visual elements that must be depicted")
+    negativeConcepts: List[str] = Field(default_factory=list, description="Forbidden/unrelated concepts to exclude")
+    fallback_queries: List[str] = Field(default_factory=list, description="Alternative queries if primary has low relevance")
+    selectedMedia: Optional[str] = Field(default=None, description="Identified media or URL")
+    relevanceScore: Optional[float] = Field(default=None, description="Semantic match relevance score (0.0 to 1.0)")
+    status: Optional[str] = Field(default="pending", description="matched, no_relevant_media, ai_generated, pending")
 
 # Complete Content Plan
 class ContentPlan(BaseModel):
@@ -59,6 +96,8 @@ class ContentPlan(BaseModel):
     hashtags: List[str] = Field(description="5 to 8 trending hashtags including #qoneqt")
     caption_for_post: str = Field(description="Social caption optimized for the Qoneqt Global Feed")
     director_notes: Optional[str] = Field(default=None, description="Cinematic director notes for pacing, camera, and mood")
+    understanding: Optional[PromptUnderstanding] = Field(default=None, description="Extracted prompt understanding")
+
 
 # Quality Check Models
 class QCCheckItem(BaseModel):
@@ -134,6 +173,13 @@ class JobOptions(BaseModel):
     music_style: str = "Cinematic" # Epic, Inspirational, Corporate, Cinematic, Emotional, Sci-Fi, Luxury
     voice_style: str = "Storytelling" # Documentary, Energetic, Luxury, Storytelling, Professional
     is_cinematic_director: bool = False
+    generation_config: Optional["GenerationConfigModel"] = None
+
+class GenerationConfigModel(BaseModel):
+    provider: str = "qoneqt"          # "qoneqt" | "user"
+    provider_id: Optional[str] = None # "gemini", "openai", "openrouter", "anthropic", "groq", "fal", "custom"
+    model: Optional[str] = None
+    allow_fallback: bool = False
 
 class CreateJobRequest(BaseModel):
     mode: Literal["topic", "script", "trending"] = "topic"
@@ -159,6 +205,15 @@ class JobStatus(BaseModel):
     error: Optional[str] = None
     created_at: str
     updated_at: str
+
+    # Step 13 Standardized Job Structure fields
+    jobId: Optional[str] = None
+    originalPrompt: Optional[str] = None
+    understanding: Optional[Dict[str, Any]] = None
+    storyboard: Optional[List[Dict[str, Any]]] = None
+    scenes: Optional[List[Dict[str, Any]]] = None
+    finalVideoUrl: Optional[str] = None
+    qualityScore: Optional[int] = None
 
 # AI Command Center Data Models
 class CommunityInsight(BaseModel):
