@@ -1,0 +1,18 @@
+{
+  "job_id": "test_run_4",
+  "status": "completed",
+  "progress": 100,
+  "prompt": "Cyberpunk drone flying through neon Tokyo rain",
+  "enhanced_prompt": "Cyberpunk drone flying through neon Tokyo rain, sweeping high-altitude cinematic drone aerial shot, expansive perspective, 8k resolution, cinematic lighting, photorealistic, 35mm film grain, anamorphic lens flare, award-winning cinematography, high dynamic range, master shot",
+  "style": "Cinematic",
+  "camera_motion": "Drone shot",
+  "duration": 5,
+  "aspect_ratio": "16:9",
+  "video_url": "/api/videos/test_run_4.mp4",
+  "watermarked_video_url": "/api/videos/test_run_4.mp4",
+  "thumbnail_url": "/api/thumbnails/test_run_4.jpg",
+  "provider_used": "Pexels Cinematic Engine",
+  "error": null,
+  "created_at": 1791037163.835267,
+  "completed_at": 1791037165.9634492
+}

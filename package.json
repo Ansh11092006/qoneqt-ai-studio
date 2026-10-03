@@ -1,0 +1,15 @@
+{
+  "name": "qoneqt-ai-studio",
+  "version": "1.0.0",
+  "description": "One idea in. One publish-ready video out.",
+  "scripts": {
+    "start": "concurrently --kill-others-on-fail --prefix-colors \"cyan,magenta\" --names \"API,UI\" \"npm run api\" \"npm run ui\"",
+    "api": ".venv\\Scripts\\python.exe -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload",
+    "ui": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

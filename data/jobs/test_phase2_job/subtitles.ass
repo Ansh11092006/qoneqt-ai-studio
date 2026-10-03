@@ -1,0 +1,52 @@
+[Script Info]
+Title: Qoneqt AI Studio Dynamic Subtitles
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.601
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial Black,76,&H00FFFFFF&,&H000000FF&,&H00050505&,&H80000000&,-1,0,0,0,100,100,1,0,1,6,3,2,60,60,420,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:00.43,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}ARE{\c&H00FFFFFF&\fscx100\fscy100} YOU MAKING
+Dialogue: 0,0:00:00.43,0:00:00.87,Default,,0,0,0,,ARE {\c&H0066ff00&\fscx112\fscy112}YOU{\c&H00FFFFFF&\fscx100\fscy100} MAKING
+Dialogue: 0,0:00:00.87,0:00:01.30,Default,,0,0,0,,ARE YOU {\c&H0066ff00&\fscx112\fscy112}MAKING{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:01.30,0:00:01.73,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}THESE{\c&H00FFFFFF&\fscx100\fscy100} 5 DEADLY
+Dialogue: 0,0:00:01.73,0:00:02.17,Default,,0,0,0,,THESE {\c&H0066ff00&\fscx112\fscy112}5{\c&H00FFFFFF&\fscx100\fscy100} DEADLY
+Dialogue: 0,0:00:02.17,0:00:02.60,Default,,0,0,0,,THESE 5 {\c&H0066ff00&\fscx112\fscy112}DEADLY{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:02.60,0:00:03.03,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}CYBERSECURITY{\c&H00FFFFFF&\fscx100\fscy100} MISTAKES ON
+Dialogue: 0,0:00:03.03,0:00:03.46,Default,,0,0,0,,CYBERSECURITY {\c&H0066ff00&\fscx112\fscy112}MISTAKES{\c&H00FFFFFF&\fscx100\fscy100} ON
+Dialogue: 0,0:00:03.46,0:00:03.90,Default,,0,0,0,,CYBERSECURITY MISTAKES {\c&H0066ff00&\fscx112\fscy112}ON{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:03.90,0:00:04.33,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}CAMPUS{\c&H00FFFFFF&\fscx100\fscy100} RIGHT NOW?
+Dialogue: 0,0:00:04.33,0:00:04.76,Default,,0,0,0,,CAMPUS {\c&H0066ff00&\fscx112\fscy112}RIGHT{\c&H00FFFFFF&\fscx100\fscy100} NOW?
+Dialogue: 0,0:00:04.76,0:00:05.20,Default,,0,0,0,,CAMPUS RIGHT {\c&H0066ff00&\fscx112\fscy112}NOW?{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:05.20,0:00:05.66,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}MISTAKE{\c&H00FFFFFF&\fscx100\fscy100} 1: CONNECTING
+Dialogue: 0,0:00:05.66,0:00:06.13,Default,,0,0,0,,MISTAKE {\c&H0066ff00&\fscx112\fscy112}1:{\c&H00FFFFFF&\fscx100\fscy100} CONNECTING
+Dialogue: 0,0:00:06.13,0:00:06.60,Default,,0,0,0,,MISTAKE 1: {\c&H0066ff00&\fscx112\fscy112}CONNECTING{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:06.60,0:00:07.06,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}TO{\c&H00FFFFFF&\fscx100\fscy100} FREE CAMPUS
+Dialogue: 0,0:00:07.06,0:00:07.53,Default,,0,0,0,,TO {\c&H0066ff00&\fscx112\fscy112}FREE{\c&H00FFFFFF&\fscx100\fscy100} CAMPUS
+Dialogue: 0,0:00:07.53,0:00:07.99,Default,,0,0,0,,TO FREE {\c&H0066ff00&\fscx112\fscy112}CAMPUS{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:07.99,0:00:08.46,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}WI-FI{\c&H00FFFFFF&\fscx100\fscy100} WITHOUT A
+Dialogue: 0,0:00:08.46,0:00:08.93,Default,,0,0,0,,WI-FI {\c&H0066ff00&\fscx112\fscy112}WITHOUT{\c&H00FFFFFF&\fscx100\fscy100} A
+Dialogue: 0,0:00:08.93,0:00:09.40,Default,,0,0,0,,WI-FI WITHOUT {\c&H0066ff00&\fscx112\fscy112}A{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:09.40,0:00:09.87,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}VERIFIED{\c&H00FFFFFF&\fscx100\fscy100} VPN TUNNEL.
+Dialogue: 0,0:00:09.87,0:00:10.33,Default,,0,0,0,,VERIFIED {\c&H0066ff00&\fscx112\fscy112}VPN{\c&H00FFFFFF&\fscx100\fscy100} TUNNEL.
+Dialogue: 0,0:00:10.33,0:00:10.80,Default,,0,0,0,,VERIFIED VPN {\c&H0066ff00&\fscx112\fscy112}TUNNEL.{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:10.80,0:00:11.28,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}MISTAKE{\c&H00FFFFFF&\fscx100\fscy100} 2: REUSING
+Dialogue: 0,0:00:11.28,0:00:11.76,Default,,0,0,0,,MISTAKE {\c&H0066ff00&\fscx112\fscy112}2:{\c&H00FFFFFF&\fscx100\fscy100} REUSING
+Dialogue: 0,0:00:11.76,0:00:12.24,Default,,0,0,0,,MISTAKE 2: {\c&H0066ff00&\fscx112\fscy112}REUSING{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:12.24,0:00:12.72,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}YOUR{\c&H00FFFFFF&\fscx100\fscy100} FAVORITE MASTER
+Dialogue: 0,0:00:12.72,0:00:13.20,Default,,0,0,0,,YOUR {\c&H0066ff00&\fscx112\fscy112}FAVORITE{\c&H00FFFFFF&\fscx100\fscy100} MASTER
+Dialogue: 0,0:00:13.20,0:00:13.67,Default,,0,0,0,,YOUR FAVORITE {\c&H0066ff00&\fscx112\fscy112}MASTER{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:13.67,0:00:14.15,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}PASSWORD{\c&H00FFFFFF&\fscx100\fscy100} ACROSS STUDENT
+Dialogue: 0,0:00:14.15,0:00:14.63,Default,,0,0,0,,PASSWORD {\c&H0066ff00&\fscx112\fscy112}ACROSS{\c&H00FFFFFF&\fscx100\fscy100} STUDENT
+Dialogue: 0,0:00:14.63,0:00:15.11,Default,,0,0,0,,PASSWORD ACROSS {\c&H0066ff00&\fscx112\fscy112}STUDENT{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:15.11,0:00:15.59,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}PORTAL{\c&H00FFFFFF&\fscx100\fscy100} AND PERSONAL
+Dialogue: 0,0:00:15.59,0:00:16.07,Default,,0,0,0,,PORTAL {\c&H0066ff00&\fscx112\fscy112}AND{\c&H00FFFFFF&\fscx100\fscy100} PERSONAL
+Dialogue: 0,0:00:16.07,0:00:16.55,Default,,0,0,0,,PORTAL AND {\c&H0066ff00&\fscx112\fscy112}PERSONAL{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:16.55,0:00:17.03,Default,,0,0,0,,{\c&H0066ff00&\fscx112\fscy112}EMAIL.{\c&H00FFFFFF&\fscx100\fscy100}

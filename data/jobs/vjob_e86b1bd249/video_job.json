@@ -1,0 +1,18 @@
+{
+  "job_id": "vjob_e86b1bd249",
+  "status": "completed",
+  "progress": 100,
+  "prompt": "Futuristic hypercar racing through neon Tokyo highway at night",
+  "enhanced_prompt": "Futuristic hypercar racing through neon Tokyo highway at night, seamless dynamic tracking shot following motion smoothly along subject, 8k resolution, cinematic lighting, photorealistic, 35mm film grain, anamorphic lens flare, award-winning cinematography, high dynamic range, master shot",
+  "style": "Cinematic",
+  "camera_motion": "Tracking shot",
+  "duration": 5,
+  "aspect_ratio": "16:9",
+  "video_url": "/api/videos/vjob_e86b1bd249.mp4",
+  "watermarked_video_url": "/api/videos/vjob_e86b1bd249.mp4",
+  "thumbnail_url": "/api/thumbnails/vjob_e86b1bd249.jpg",
+  "provider_used": "Pexels Cinematic Engine",
+  "error": null,
+  "created_at": 1791037347.0579853,
+  "completed_at": 1791037349.526939
+}

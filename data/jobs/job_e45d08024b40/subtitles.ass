@@ -1,0 +1,65 @@
+[Script Info]
+Title: Qoneqt AI Studio Dynamic Subtitles
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.601
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial Black,76,&H00FFFFFF&,&H000000FF&,&H00050505&,&H80000000&,-1,0,0,0,100,100,1,0,1,6,3,2,60,60,420,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:00.40,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}HERE{\c&H00FFFFFF&\fscx100\fscy100} IS WHAT
+Dialogue: 0,0:00:00.40,0:00:00.80,Default,,0,0,0,,HERE {\c&H00f16663&\fscx112\fscy112}IS{\c&H00FFFFFF&\fscx100\fscy100} WHAT
+Dialogue: 0,0:00:00.80,0:00:01.20,Default,,0,0,0,,HERE IS {\c&H00f16663&\fscx112\fscy112}WHAT{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:01.20,0:00:01.60,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}YOU{\c&H00FFFFFF&\fscx100\fscy100} ABSOLUTELY MUST
+Dialogue: 0,0:00:01.60,0:00:01.99,Default,,0,0,0,,YOU {\c&H00f16663&\fscx112\fscy112}ABSOLUTELY{\c&H00FFFFFF&\fscx100\fscy100} MUST
+Dialogue: 0,0:00:01.99,0:00:02.40,Default,,0,0,0,,YOU ABSOLUTELY {\c&H00f16663&\fscx112\fscy112}MUST{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:02.40,0:00:02.79,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}KNOW{\c&H00FFFFFF&\fscx100\fscy100} ABOUT TO
+Dialogue: 0,0:00:02.79,0:00:03.19,Default,,0,0,0,,KNOW {\c&H00f16663&\fscx112\fscy112}ABOUT{\c&H00FFFFFF&\fscx100\fscy100} TO
+Dialogue: 0,0:00:03.19,0:00:03.59,Default,,0,0,0,,KNOW ABOUT {\c&H00f16663&\fscx112\fscy112}TO{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:03.59,0:00:03.99,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}ANYONE{\c&H00FFFFFF&\fscx100\fscy100} ELSE, IT’S
+Dialogue: 0,0:00:03.99,0:00:04.39,Default,,0,0,0,,ANYONE {\c&H00f16663&\fscx112\fscy112}ELSE,{\c&H00FFFFFF&\fscx100\fscy100} IT’S
+Dialogue: 0,0:00:04.39,0:00:04.79,Default,,0,0,0,,ANYONE ELSE, {\c&H00f16663&\fscx112\fscy112}IT’S{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:04.79,0:00:05.19,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}JUST{\c&H00FFFFFF&\fscx100\fscy100} METAL, RU!
+Dialogue: 0,0:00:05.19,0:00:05.59,Default,,0,0,0,,JUST {\c&H00f16663&\fscx112\fscy112}METAL,{\c&H00FFFFFF&\fscx100\fscy100} RU!
+Dialogue: 0,0:00:05.59,0:00:05.99,Default,,0,0,0,,JUST METAL, {\c&H00f16663&\fscx112\fscy112}RU!{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:05.99,0:00:06.51,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}MOST{\c&H00FFFFFF&\fscx100\fscy100} PEOPLE COMPLETELY
+Dialogue: 0,0:00:06.51,0:00:07.03,Default,,0,0,0,,MOST {\c&H00f16663&\fscx112\fscy112}PEOPLE{\c&H00FFFFFF&\fscx100\fscy100} COMPLETELY
+Dialogue: 0,0:00:07.03,0:00:07.55,Default,,0,0,0,,MOST PEOPLE {\c&H00f16663&\fscx112\fscy112}COMPLETELY{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:07.55,0:00:08.07,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}OVERLOOK{\c&H00FFFFFF&\fscx100\fscy100} THE FUNDAMENTAL
+Dialogue: 0,0:00:08.07,0:00:08.59,Default,,0,0,0,,OVERLOOK {\c&H00f16663&\fscx112\fscy112}THE{\c&H00FFFFFF&\fscx100\fscy100} FUNDAMENTAL
+Dialogue: 0,0:00:08.59,0:00:09.11,Default,,0,0,0,,OVERLOOK THE {\c&H00f16663&\fscx112\fscy112}FUNDAMENTAL{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:09.11,0:00:09.63,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}SECRET{\c&H00FFFFFF&\fscx100\fscy100} BEHIND THIS
+Dialogue: 0,0:00:09.63,0:00:10.14,Default,,0,0,0,,SECRET {\c&H00f16663&\fscx112\fscy112}BEHIND{\c&H00FFFFFF&\fscx100\fscy100} THIS
+Dialogue: 0,0:00:10.14,0:00:10.66,Default,,0,0,0,,SECRET BEHIND {\c&H00f16663&\fscx112\fscy112}THIS{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:10.66,0:00:11.18,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}TOPIC.{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:11.18,0:00:11.67,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}WHEN{\c&H00FFFFFF&\fscx100\fscy100} YOU APPLY
+Dialogue: 0,0:00:11.67,0:00:12.15,Default,,0,0,0,,WHEN {\c&H00f16663&\fscx112\fscy112}YOU{\c&H00FFFFFF&\fscx100\fscy100} APPLY
+Dialogue: 0,0:00:12.15,0:00:12.63,Default,,0,0,0,,WHEN YOU {\c&H00f16663&\fscx112\fscy112}APPLY{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:12.63,0:00:13.12,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}THIS{\c&H00FFFFFF&\fscx100\fscy100} PRINCIPLE CONSISTENTLY,
+Dialogue: 0,0:00:13.12,0:00:13.60,Default,,0,0,0,,THIS {\c&H00f16663&\fscx112\fscy112}PRINCIPLE{\c&H00FFFFFF&\fscx100\fscy100} CONSISTENTLY,
+Dialogue: 0,0:00:13.60,0:00:14.08,Default,,0,0,0,,THIS PRINCIPLE {\c&H00f16663&\fscx112\fscy112}CONSISTENTLY,{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:14.08,0:00:14.56,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}EVERYTHING{\c&H00FFFFFF&\fscx100\fscy100} CHANGES IN
+Dialogue: 0,0:00:14.56,0:00:15.05,Default,,0,0,0,,EVERYTHING {\c&H00f16663&\fscx112\fscy112}CHANGES{\c&H00FFFFFF&\fscx100\fscy100} IN
+Dialogue: 0,0:00:15.05,0:00:15.53,Default,,0,0,0,,EVERYTHING CHANGES {\c&H00f16663&\fscx112\fscy112}IN{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:15.53,0:00:16.01,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}YOUR{\c&H00FFFFFF&\fscx100\fscy100} DAILY WORKFLOW.
+Dialogue: 0,0:00:16.01,0:00:16.50,Default,,0,0,0,,YOUR {\c&H00f16663&\fscx112\fscy112}DAILY{\c&H00FFFFFF&\fscx100\fscy100} WORKFLOW.
+Dialogue: 0,0:00:16.50,0:00:16.98,Default,,0,0,0,,YOUR DAILY {\c&H00f16663&\fscx112\fscy112}WORKFLOW.{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:16.98,0:00:17.35,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}TAKE{\c&H00FFFFFF&\fscx100\fscy100} ACTION ON
+Dialogue: 0,0:00:17.35,0:00:17.73,Default,,0,0,0,,TAKE {\c&H00f16663&\fscx112\fscy112}ACTION{\c&H00FFFFFF&\fscx100\fscy100} ON
+Dialogue: 0,0:00:17.73,0:00:18.10,Default,,0,0,0,,TAKE ACTION {\c&H00f16663&\fscx112\fscy112}ON{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:18.10,0:00:18.48,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}THIS{\c&H00FFFFFF&\fscx100\fscy100} INSIGHT RIGHT
+Dialogue: 0,0:00:18.48,0:00:18.85,Default,,0,0,0,,THIS {\c&H00f16663&\fscx112\fscy112}INSIGHT{\c&H00FFFFFF&\fscx100\fscy100} RIGHT
+Dialogue: 0,0:00:18.85,0:00:19.22,Default,,0,0,0,,THIS INSIGHT {\c&H00f16663&\fscx112\fscy112}RIGHT{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:19.22,0:00:19.60,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}NOW{\c&H00FFFFFF&\fscx100\fscy100} AND LEVEL
+Dialogue: 0,0:00:19.60,0:00:19.97,Default,,0,0,0,,NOW {\c&H00f16663&\fscx112\fscy112}AND{\c&H00FFFFFF&\fscx100\fscy100} LEVEL
+Dialogue: 0,0:00:19.97,0:00:20.34,Default,,0,0,0,,NOW AND {\c&H00f16663&\fscx112\fscy112}LEVEL{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:20.34,0:00:20.72,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}UP{\c&H00FFFFFF&\fscx100\fscy100} YOUR RESULTS
+Dialogue: 0,0:00:20.72,0:00:21.09,Default,,0,0,0,,UP {\c&H00f16663&\fscx112\fscy112}YOUR{\c&H00FFFFFF&\fscx100\fscy100} RESULTS
+Dialogue: 0,0:00:21.09,0:00:21.47,Default,,0,0,0,,UP YOUR {\c&H00f16663&\fscx112\fscy112}RESULTS{\c&H00FFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:21.47,0:00:21.84,Default,,0,0,0,,{\c&H00f16663&\fscx112\fscy112}TODAY.{\c&H00FFFFFF&\fscx100\fscy100}

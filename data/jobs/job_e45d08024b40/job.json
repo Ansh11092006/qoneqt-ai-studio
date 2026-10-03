@@ -1,0 +1,161 @@
+{
+  "job_id": "job_e45d08024b40",
+  "mode": "topic",
+  "input": "To anyone else, it’s just metal, rubber, and gears. But to a rider, it’s a sanctuary.\n\nWhenever the world gets too loud, this is where everything finally goes quiet. The moment you twist the throttle, the stress of the day melts into the wind.\n\nThere is a beautiful romance to the open road. It’s the crisp morning air, the warmth of the sunset on your helmet, and the heartbeat of a machine that feels alive beneath you.\n\nIt’s not just a hobby. It’s a love affair with freedom.\n\nShare this with someone who knows exactly what this feeling feels like.",
+  "options": {
+    "duration": 30,
+    "tone": "Storytelling",
+    "language": "en",
+    "voice": "M",
+    "asset_ids": [
+      "asset_5754bef6f9",
+      "asset_f5cb33d16b",
+      "asset_c62f99b749",
+      "asset_f402eb316c",
+      "asset_37e0d0b7f2",
+      "asset_2ab05e30dd"
+    ],
+    "aspect_ratio": "16:9",
+    "resolution": "1080p",
+    "custom_width": 1080,
+    "custom_height": 1920,
+    "generate_all_formats": false,
+    "category": "Published",
+    "watermark": true,
+    "watermark_config": null
+  },
+  "status": "completed",
+  "current_step": "qc",
+  "step_status": "done",
+  "message": "Video production complete. QC Score: 78/100",
+  "elapsed_sec": 99.37,
+  "plan": {
+    "title": "To Anyone Else, It’S Just Metal, Rubber, And Gears. But To A",
+    "hook": "Here is what you absolutely must know about To anyone else, it’s just metal, ru!",
+    "language": "en",
+    "theme": {
+      "mood": "Qoneqt Studio Aurora",
+      "palette": {
+        "bg1": "#070913",
+        "bg2": "#0f172a",
+        "accent": "#6366f1",
+        "text": "#f8fafc"
+      },
+      "background_type": "aurora",
+      "loading_style": "pulse",
+      "loading_messages": [
+        "Analyzing topic context and creator intent...",
+        "Writing high-retention short-form video script...",
+        "Planning visual scenes and keyword queries...",
+        "Fetching vertical video footage and photography...",
+        "Generating studio-quality voiceover audio...",
+        "Composing video timeline, transitions, and captions...",
+        "Running multi-point automated quality inspection..."
+      ]
+    },
+    "scenes": [
+      {
+        "id": 1,
+        "narration": "Here is what you absolutely must know about To anyone else, it’s just metal, ru!",
+        "on_screen_text": "To Anyone Else, It’S Jus",
+        "visual_query": "cinematic dramatic lighting portrait",
+        "visual_description": "Cinematic vertical framing capturing intense attention.",
+        "duration_sec": 5.9879999999999995,
+        "transition": "zoom"
+      },
+      {
+        "id": 2,
+        "narration": "Most people completely overlook the fundamental secret behind this topic.",
+        "on_screen_text": "The Overlooked Truth",
+        "visual_query": "modern technology abstract motion",
+        "visual_description": "Futuristic dynamic motion showcasing information flow.",
+        "duration_sec": 5.196,
+        "transition": "cut"
+      },
+      {
+        "id": 3,
+        "narration": "When you apply this principle consistently, everything changes in your daily workflow.",
+        "on_screen_text": "Apply The Principle",
+        "visual_query": "focused creator working desk",
+        "visual_description": "Professional creator working attentively in a modern studio.",
+        "duration_sec": 5.796,
+        "transition": "cut"
+      },
+      {
+        "id": 4,
+        "narration": "Take action on this insight right now and level up your results today.",
+        "on_screen_text": "Level Up Now",
+        "visual_query": "inspirational horizon sunlight city",
+        "visual_description": "Inspiring skyline bathed in golden sunlight.",
+        "duration_sec": 4.859999999999999,
+        "transition": "fade"
+      }
+    ],
+    "cta": "Follow for more daily breakthroughs on Qoneqt AI Studio!",
+    "hashtags": [
+      "#Trending",
+      "#DailyInsights",
+      "#FutureReady",
+      "#CreatorHub",
+      "#qoneqt"
+    ],
+    "caption_for_post": "The truth about To anyone else, it’s just metal, rubber,. Share your thoughts below! #qoneqt"
+  },
+  "video_url": "/api/videos/job_e45d08024b40.mp4",
+  "thumbnail_url": "/api/thumbnails/job_e45d08024b40.jpg",
+  "master_video_url": "/api/videos/job_e45d08024b40_master.mp4",
+  "watermark_applied": true,
+  "qc_report": {
+    "score": 78,
+    "checks": [
+      {
+        "name": "Resolution & Aspect Ratio",
+        "passed": false,
+        "detail": "Non-standard dimensions: 1920x1080"
+      },
+      {
+        "name": "Audio Stream Integrity",
+        "passed": true,
+        "detail": "AAC stereo audio channel present and synchronized"
+      },
+      {
+        "name": "Duration Target Accuracy",
+        "passed": false,
+        "detail": "22.2s (Target: 30.0s ±15% + 1.5s CTA)"
+      },
+      {
+        "name": "File Size Sanity",
+        "passed": true,
+        "detail": "21.49 MB (Optimized for instant mobile playback)"
+      },
+      {
+        "name": "Visual Darkness & Black Frame Detection",
+        "passed": true,
+        "detail": "Zero prolonged blackout frames detected"
+      },
+      {
+        "name": "Subtitle Track & Timing",
+        "passed": true,
+        "detail": "50 animated subtitle events synchronized"
+      },
+      {
+        "name": "Hook Retention & Virality Index",
+        "passed": true,
+        "detail": "Retention Rating: 92/100"
+      },
+      {
+        "name": "Global Feed Community Safety",
+        "passed": true,
+        "detail": "Zero policy violations; cleared for Global Feed distribution"
+      }
+    ],
+    "suggestions": [
+      "Strong pattern-interrupt hook and high clarity for vertical feed retention.",
+      "Consider testing an alternating camera angle for scene 2 to elevate mid-video retention.",
+      "Include the #qoneqt trending hashtag in your first comment for maximum algorithmic reach."
+    ]
+  },
+  "error": null,
+  "created_at": "2026-10-02T16:23:59.159372+00:00",
+  "updated_at": "2026-10-02T16:25:38.541291+00:00"
+}

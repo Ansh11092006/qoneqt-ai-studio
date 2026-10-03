@@ -1,0 +1,18 @@
+{
+  "job_id": "vjob_4147b6090c",
+  "status": "completed",
+  "progress": 100,
+  "prompt": "create a cinematic bike video",
+  "enhanced_prompt": "create a cinematic bike video, sweeping high-altitude cinematic drone aerial shot, expansive perspective, 8k resolution, cinematic lighting, photorealistic, 35mm film grain, anamorphic lens flare, award-winning cinematography, high dynamic range, master shot",
+  "style": "Cinematic",
+  "camera_motion": "Drone shot",
+  "duration": 5,
+  "aspect_ratio": "16:9",
+  "video_url": "/api/videos/vjob_4147b6090c.mp4",
+  "watermarked_video_url": "/api/videos/vjob_4147b6090c.mp4",
+  "thumbnail_url": "/api/thumbnails/vjob_4147b6090c.jpg",
+  "provider_used": "Pexels Cinematic Engine",
+  "error": null,
+  "created_at": 1791037501.611782,
+  "completed_at": 1791037504.4575675
+}

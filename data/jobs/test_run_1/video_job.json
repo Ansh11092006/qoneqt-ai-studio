@@ -1,0 +1,18 @@
+{
+  "job_id": "test_run_1",
+  "status": "failed",
+  "progress": 0,
+  "prompt": "Cyberpunk drone flying through neon Tokyo rain",
+  "enhanced_prompt": "Cyberpunk drone flying through neon Tokyo rain, sweeping high-altitude cinematic drone aerial shot, expansive perspective, 8k resolution, cinematic lighting, photorealistic, 35mm film grain, anamorphic lens flare, award-winning cinematography, high dynamic range, master shot",
+  "style": "Cinematic",
+  "camera_motion": "Drone shot",
+  "duration": 5,
+  "aspect_ratio": "16:9",
+  "video_url": null,
+  "watermarked_video_url": null,
+  "thumbnail_url": null,
+  "provider_used": null,
+  "error": "1 validation error for Theme\nloading_messages\n  List should have at least 7 items after validation, not 0 [type=too_short, input_value=[], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_short",
+  "created_at": 1791037068.9240544,
+  "completed_at": null
+}
